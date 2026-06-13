@@ -4,6 +4,8 @@ import '../../../core/common/spacing.dart';
 import '../../../core/design/cards/surface_card.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/portfolio_scope.dart';
+import '../../admin/admin_scope.dart';
+import '../../admin/widgets/edit_profile_dialog.dart';
 import 'phone_mockup.dart';
 
 class HeroSection extends StatelessWidget {
@@ -12,27 +14,82 @@ class HeroSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final profile = PortfolioScope.of(context).profile;
+    final isAdmin = AdminScope.isAdmin(context);
     final isMobile = MediaQuery.of(context).size.width < 700;
 
-    return SurfaceCard(
-      padding: const EdgeInsets.all(Spacing.xl),
-      child: isMobile
-          ? Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _HeroLeft(profile: profile),
-                const SizedBox(height: 32),
-                _HeroPhones(imageUrls: profile.heroImageUrls),
-              ],
-            )
-          : Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(child: _HeroLeft(profile: profile)),
-                const SizedBox(width: 36),
-                SizedBox(width: 300, child: _HeroPhones(imageUrls: profile.heroImageUrls)),
-              ],
+    return Stack(
+      children: [
+        SurfaceCard(
+          padding: const EdgeInsets.all(Spacing.xl),
+          child: isMobile
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _HeroLeft(profile: profile),
+                    const SizedBox(height: 32),
+                    _HeroPhones(imageUrls: profile.heroImageUrls),
+                  ],
+                )
+              : Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(child: _HeroLeft(profile: profile)),
+                    const SizedBox(width: 36),
+                    SizedBox(
+                      width: 300,
+                      child: _HeroPhones(imageUrls: profile.heroImageUrls),
+                    ),
+                  ],
+                ),
+        ),
+        if (isAdmin)
+          Positioned(
+            top: 8,
+            right: 8,
+            child: _AdminEditButton(
+              onTap: () => EditProfileDialog.show(
+                context,
+                profile: profile,
+                onSaved: PortfolioScope.reloadOf(context),
+              ),
             ),
+          ),
+      ],
+    );
+  }
+}
+
+class _AdminEditButton extends StatelessWidget {
+  final VoidCallback onTap;
+  const _AdminEditButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.green,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.edit_rounded, size: 14, color: Colors.white),
+              SizedBox(width: 4),
+              Text(
+                '편집',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

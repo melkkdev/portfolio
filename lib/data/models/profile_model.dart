@@ -31,4 +31,14 @@ class ProfileModel {
       heroImageUrls: List<String>.from((map['heroImageUrls'] as List?) ?? []),
     );
   }
+
+  Map<String, dynamic> toMap() => {
+        'name': name,
+        'appTitle': appTitle,
+        'role': role,
+        'tagline': tagline,
+        'careerYears': careerYears,
+        'githubHandle': githubHandle,
+        'heroImageUrls': heroImageUrls,
+      };
 }

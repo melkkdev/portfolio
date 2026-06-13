@@ -24,11 +24,13 @@ class InfoRow extends StatelessWidget {
           SizedBox(
             width: 90,
             child: Text(
-              label,
-              style: const TextStyle(
+              label.isEmpty ? '없음' : label,
+              style: TextStyle(
                 fontSize: 13,
                 color: AppColors.muted,
                 fontWeight: FontWeight.w500,
+                fontStyle:
+                    label.isEmpty ? FontStyle.italic : FontStyle.normal,
               ),
             ),
           ),
