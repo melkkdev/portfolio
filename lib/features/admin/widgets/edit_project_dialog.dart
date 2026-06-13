@@ -81,12 +81,16 @@ class _EditProjectDialogState extends State<EditProjectDialog> {
         .toList();
 
     // 행: 기존 행이 있으면 그대로, 없으면 기본 레이블로 초기화
+    // 기본 레이블과 일치하는 행은 삭제 불가 고정 행으로 표시
     if (p?.rows.isNotEmpty == true) {
       _rows = p!.rows
-          .map((r) => _RowEntry(r.label, r.value, r.url ?? ''))
+          .map((r) => _RowEntry(r.label, r.value, r.url ?? '',
+              isFixed: _defaultLabels.contains(r.label)))
           .toList();
     } else {
-      _rows = _defaultLabels.map((l) => _RowEntry(l, '', '')).toList();
+      _rows = _defaultLabels
+          .map((l) => _RowEntry(l, '', '', isFixed: true))
+          .toList();
     }
 
     _stats = (p?.stats ?? []).map((s) => _StatEntry(s.value, s.label)).toList();
@@ -179,7 +183,9 @@ class _EditProjectDialogState extends State<EditProjectDialog> {
             .where((s) => s.isNotEmpty)
             .toList(),
         rows: _rows
-            .where((r) => r.value.text.trim().isNotEmpty)
+            // 고정 행은 내용이 비어도 저장 (포트폴리오에서 "없음"으로 표시)
+            // 사용자 추가 행은 내용이 있을 때만 저장
+            .where((r) => r.isFixed || r.value.text.trim().isNotEmpty)
             .map((r) => InfoRowModel(
                   label: r.label.text.trim(),
                   value: r.value.text.trim(),
@@ -413,7 +419,11 @@ class _EditProjectDialogState extends State<EditProjectDialog> {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
-        side: const BorderSide(color: AppColors.line),
+        side: BorderSide(
+          color: entry.isFixed
+              ? AppColors.green.withAlpha(80)
+              : AppColors.line,
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 8, 4, 12),
@@ -422,41 +432,65 @@ class _EditProjectDialogState extends State<EditProjectDialog> {
           children: [
             Row(
               children: [
-                Text(
-                  '행 ${idx + 1}',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.muted,
+                if (entry.isFixed)
+                  const Icon(Icons.lock_rounded,
+                      size: 12, color: AppColors.green)
+                else
+                  Text(
+                    '행 ${idx + 1}',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.muted,
+                    ),
                   ),
-                ),
                 const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.remove_circle_outline,
-                      color: Colors.red, size: 18),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  onPressed: () => setState(() {
-                    entry.dispose();
-                    _rows.removeAt(idx);
-                  }),
-                ),
+                if (!entry.isFixed)
+                  IconButton(
+                    icon: const Icon(Icons.remove_circle_outline,
+                        color: Colors.red, size: 18),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    onPressed: () => setState(() {
+                      entry.dispose();
+                      _rows.removeAt(idx);
+                    }),
+                  ),
               ],
             ),
             const SizedBox(height: 6),
-            TextField(
-              controller: entry.label,
-              decoration: const InputDecoration(
-                labelText: '레이블 (비우면 "없음")',
-                isDense: true,
+            // 고정 행: 레이블을 읽기 전용 칩으로 표시
+            if (entry.isFixed)
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.green.withAlpha(20),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  entry.label.text,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.green,
+                  ),
+                ),
+              )
+            else
+              TextField(
+                controller: entry.label,
+                decoration: const InputDecoration(
+                  labelText: '레이블',
+                  isDense: true,
+                ),
               ),
-            ),
             const SizedBox(height: 8),
             TextField(
               controller: entry.value,
               maxLines: 2,
               decoration: const InputDecoration(
-                labelText: '값',
+                labelText: '내용', // 값 → 내용
                 isDense: true,
               ),
             ),
@@ -581,11 +615,12 @@ class _ImageEntry {
 }
 
 class _RowEntry {
+  final bool isFixed;
   final TextEditingController label;
   final TextEditingController value;
   final TextEditingController url;
 
-  _RowEntry(String l, String v, String u)
+  _RowEntry(String l, String v, String u, {this.isFixed = false})
       : label = TextEditingController(text: l),
         value = TextEditingController(text: v),
         url = TextEditingController(text: u);

@@ -17,6 +17,9 @@ class _PhoneGalleryState extends State<PhoneGallery>
   static const double _itemWidth = 156.0; // PhoneMockup 140 + padding 16
   static const double _pixelsPerSecond = 60.0;
 
+  // repeat() 호출 여부를 별도 추적해 LayoutBuilder 판단 후에만 시작
+  bool _loopActive = false;
+
   @override
   void initState() {
     super.initState();
@@ -26,13 +29,32 @@ class _PhoneGalleryState extends State<PhoneGallery>
       duration: Duration(
         milliseconds: (halfWidth / _pixelsPerSecond * 1000).round(),
       ),
-    )..repeat();
+    );
+  }
+
+  @override
+  void deactivate() {
+    // 위젯이 트리에서 제거되기 전에 애니메이션을 멈춰
+    // EngineFlutterView가 dispose된 뒤 프레임이 도착하는 것을 방지
+    _controller.stop();
+    _loopActive = false;
+    super.deactivate();
   }
 
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  void _updateLoop(bool needsLoop) {
+    if (needsLoop && !_loopActive) {
+      _controller.repeat();
+      _loopActive = true;
+    } else if (!needsLoop && _loopActive) {
+      _controller.stop();
+      _loopActive = false;
+    }
   }
 
   @override
@@ -46,6 +68,11 @@ class _PhoneGalleryState extends State<PhoneGallery>
           final totalWidth = _itemWidth * widget.imageUrls.length;
           final needsLoop =
               widget.imageUrls.length > 1 && totalWidth > constraints.maxWidth;
+
+          // 빌드 단계에서 직접 repeat() 호출 금지 → 프레임 후에 처리
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) _updateLoop(needsLoop);
+          });
 
           if (!needsLoop) {
             return SingleChildScrollView(

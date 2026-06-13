@@ -102,7 +102,7 @@ Future<void> _seedProjects(CollectionReference col) async {
         (i) => _img('copick_collector_${i + 1}.jpg'),
       ),
       'rows': [
-        {'label': '소속 · 연계', 'value': '㈜포이엔(Poien) — IT팀'},
+        {'label': '소속 · 연계', 'value': '㈜포이엔(fouren) — IT팀'},
         {'label': '업무 기간', 'value': '2021.06.01 ~ 2024.11.30'},
         {'label': '플랫폼', 'value': 'Android 태블릿'},
         {
@@ -127,7 +127,7 @@ Future<void> _seedProjects(CollectionReference col) async {
       'isDesktop': false,
       'imageUrls': List.generate(3, (i) => _img('copick_admin_${i + 1}.jpg')),
       'rows': [
-        {'label': '소속 · 연계', 'value': '㈜포이엔(Poien) — IT팀'},
+        {'label': '소속 · 연계', 'value': '㈜포이엔(fouren) — IT팀'},
         {'label': '업무 기간', 'value': '2021.06.01 ~ 2024.11.30'},
         {'label': '플랫폼', 'value': 'Android · iOS'},
         {'label': '주요 기능', 'value': '수거센서 상태 관리 · 기사 배차 · 수거 현황 모니터링'},
@@ -147,7 +147,7 @@ Future<void> _seedProjects(CollectionReference col) async {
       'isDesktop': true,
       'imageUrls': List.generate(2, (i) => _img('copick_desktop_${i + 1}.jpg')),
       'rows': [
-        {'label': '소속 · 연계', 'value': '㈜포이엔(Poien) — IT팀'},
+        {'label': '소속 · 연계', 'value': '㈜포이엔(fouren) — IT팀'},
         {'label': '업무 기간', 'value': '2021.06.01 ~ 2024.11.30'},
         {'label': '플랫폼', 'value': 'Windows Desktop'},
         {'label': '주요 기능', 'value': '카페별 수거량 입력·수정 · 팀 필터링 · 전체 현황 집계'},
@@ -169,7 +169,7 @@ Future<void> _seedProjects(CollectionReference col) async {
       'isDesktop': false,
       'imageUrls': List.generate(3, (i) => _img('soil_${i + 1}.jpg')),
       'rows': [
-        {'label': '소속 · 연계', 'value': '㈜포이엔(Poien) — IT팀 · 회사 연구팀과 협업'},
+        {'label': '소속 · 연계', 'value': '㈜포이엔(fouren) — IT팀 · 회사 연구팀과 협업'},
         {
           'label': '업무 기간',
           'value': '2021.06.01 ~ 2024.11.30 재직 기간 중 (CO:PICK과 병행)',

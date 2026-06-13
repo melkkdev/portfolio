@@ -16,6 +16,8 @@ class InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isEmpty = value.isEmpty;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
@@ -24,38 +26,45 @@ class InfoRow extends StatelessWidget {
           SizedBox(
             width: 90,
             child: Text(
-              label.isEmpty ? '없음' : label,
-              style: TextStyle(
+              label,
+              style: const TextStyle(
                 fontSize: 13,
                 color: AppColors.muted,
                 fontWeight: FontWeight.w500,
-                fontStyle:
-                    label.isEmpty ? FontStyle.italic : FontStyle.normal,
               ),
             ),
           ),
           const SizedBox(width: 16),
           Expanded(
-            child: url != null
-                ? GestureDetector(
-                    onTap: () => launchUrl(Uri.parse(url!)),
-                    child: Text(
-                      value,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: AppColors.green,
-                        fontWeight: FontWeight.w600,
-                      ),
+            child: isEmpty
+                ? const Text(
+                    '없음',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: AppColors.muted,
+                      fontStyle: FontStyle.italic,
                     ),
                   )
-                : Text(
-                    value,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: AppColors.inkSoft,
-                      height: 1.6,
-                    ),
-                  ),
+                : url != null
+                    ? GestureDetector(
+                        onTap: () => launchUrl(Uri.parse(url!)),
+                        child: Text(
+                          value,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.green,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      )
+                    : Text(
+                        value,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppColors.inkSoft,
+                          height: 1.6,
+                        ),
+                      ),
           ),
         ],
       ),
