@@ -2,16 +2,13 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/design/cards/surface_card.dart';
 import '../../../core/design/shared/info_row.dart';
-import '../../../data/portfolio_data.dart';
+import '../../../data/models/project_model.dart';
 import 'desktop_gallery.dart';
 import 'phone_gallery.dart';
 import 'stat_item.dart';
 
-bool _isDesktop(List<String> images) =>
-    images.isNotEmpty && images.first.contains('_desktop_');
-
 class ProjectCard extends StatelessWidget {
-  final ProjectData project;
+  final ProjectModel project;
 
   const ProjectCard({super.key, required this.project});
 
@@ -45,11 +42,11 @@ class ProjectCard extends StatelessWidget {
               ),
             ),
           ],
-          if (project.images.isNotEmpty) ...[
+          if (project.imageUrls.isNotEmpty) ...[
             const SizedBox(height: 24),
-            _isDesktop(project.images)
-                ? DesktopGallery(images: project.images)
-                : PhoneGallery(images: project.images),
+            project.isDesktop
+                ? DesktopGallery(imageUrls: project.imageUrls)
+                : PhoneGallery(imageUrls: project.imageUrls),
           ],
           const SizedBox(height: 24),
           const Divider(color: AppColors.line, height: 1),

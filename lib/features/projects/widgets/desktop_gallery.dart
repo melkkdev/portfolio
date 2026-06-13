@@ -1,19 +1,20 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 
 class DesktopGallery extends StatelessWidget {
-  final List<String> images;
+  final List<String> imageUrls;
 
-  const DesktopGallery({super.key, required this.images});
+  const DesktopGallery({super.key, required this.imageUrls});
 
   @override
   Widget build(BuildContext context) {
-    if (images.isEmpty) return const SizedBox.shrink();
+    if (imageUrls.isEmpty) return const SizedBox.shrink();
 
     return Column(
-      children: images
+      children: imageUrls
           .map(
-            (img) => Padding(
+            (url) => Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
@@ -29,10 +30,10 @@ class DesktopGallery extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: Image.asset(
-                    img,
+                  child: CachedNetworkImage(
+                    imageUrl: url,
                     fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => Container(
+                    errorWidget: (_, __, ___) => Container(
                       height: 200,
                       color: AppColors.lineSoft,
                       child: const Center(

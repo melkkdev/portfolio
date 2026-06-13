@@ -1,11 +1,12 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 
 class PhoneMockup extends StatelessWidget {
-  final String imagePath;
+  final String imageUrl;
   final double rotateDeg;
 
-  const PhoneMockup({super.key, required this.imagePath, this.rotateDeg = 0});
+  const PhoneMockup({super.key, required this.imageUrl, this.rotateDeg = 0});
 
   @override
   Widget build(BuildContext context) {
@@ -32,11 +33,11 @@ class PhoneMockup extends StatelessWidget {
           ],
         ),
         clipBehavior: Clip.hardEdge,
-        child: Image.asset(
-          imagePath,
+        child: CachedNetworkImage(
+          imageUrl: imageUrl,
           fit: BoxFit.cover,
           alignment: Alignment.topCenter,
-          errorBuilder: (_, __, ___) => Container(
+          errorWidget: (_, __, ___) => Container(
             color: AppColors.greenLight,
             child: const Center(
               child: Icon(Icons.phone_android, color: AppColors.green, size: 40),

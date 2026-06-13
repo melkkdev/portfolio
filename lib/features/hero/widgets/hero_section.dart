@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../../core/common/app_constants.dart';
-import '../../../core/common/image_paths.dart';
 import '../../../core/common/spacing.dart';
 import '../../../core/design/cards/surface_card.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../data/portfolio_scope.dart';
 import 'phone_mockup.dart';
 
 class HeroSection extends StatelessWidget {
@@ -12,6 +11,7 @@ class HeroSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final profile = PortfolioScope.of(context).profile;
     final isMobile = MediaQuery.of(context).size.width < 700;
 
     return SurfaceCard(
@@ -20,17 +20,17 @@ class HeroSection extends StatelessWidget {
           ? Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _HeroLeft(),
+                _HeroLeft(profile: profile),
                 const SizedBox(height: 32),
-                _HeroPhones(),
+                _HeroPhones(imageUrls: profile.heroImageUrls),
               ],
             )
           : Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Expanded(child: _HeroLeft()),
+                Expanded(child: _HeroLeft(profile: profile)),
                 const SizedBox(width: 36),
-                SizedBox(width: 300, child: _HeroPhones()),
+                SizedBox(width: 300, child: _HeroPhones(imageUrls: profile.heroImageUrls)),
               ],
             ),
     );
@@ -38,13 +38,17 @@ class HeroSection extends StatelessWidget {
 }
 
 class _HeroLeft extends StatelessWidget {
+  final dynamic profile;
+
+  const _HeroLeft({required this.profile});
+
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          AppConstants.role,
+          profile.role,
           style: AppTheme.mono(
             fontSize: 12,
             color: AppColors.muted,
@@ -52,9 +56,9 @@ class _HeroLeft extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 18),
-        const Text(
-          AppConstants.name,
-          style: TextStyle(
+        Text(
+          profile.name,
+          style: const TextStyle(
             fontSize: 34,
             fontWeight: FontWeight.w800,
             color: AppColors.green,
@@ -62,9 +66,9 @@ class _HeroLeft extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 14),
-        const Text(
-          AppConstants.tagline,
-          style: TextStyle(
+        Text(
+          profile.tagline,
+          style: const TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w800,
             letterSpacing: -0.56,
@@ -77,15 +81,15 @@ class _HeroLeft extends StatelessWidget {
           spacing: 22,
           runSpacing: 10,
           children: [
-            const Text(
-              AppConstants.careerYears,
-              style: TextStyle(fontSize: 14, color: AppColors.inkSoft),
+            Text(
+              profile.careerYears,
+              style: const TextStyle(fontSize: 14, color: AppColors.inkSoft),
             ),
             GestureDetector(
-              onTap: () => launchUrl(Uri.parse(AppConstants.githubUrl)),
-              child: const Text(
-                '🔗 ${AppConstants.githubDisplayUrl}',
-                style: TextStyle(
+              onTap: () => launchUrl(Uri.parse(profile.githubUrl)),
+              child: Text(
+                '🔗 ${profile.githubDisplayUrl}',
+                style: const TextStyle(
                   fontSize: 14,
                   color: AppColors.green,
                   fontWeight: FontWeight.w600,
@@ -100,8 +104,14 @@ class _HeroLeft extends StatelessWidget {
 }
 
 class _HeroPhones extends StatelessWidget {
+  final List<String> imageUrls;
+
+  const _HeroPhones({required this.imageUrls});
+
   @override
   Widget build(BuildContext context) {
+    if (imageUrls.length < 3) return const SizedBox.shrink();
+
     return SizedBox(
       height: 300,
       child: Stack(
@@ -110,17 +120,17 @@ class _HeroPhones extends StatelessWidget {
           Positioned(
             left: 0,
             top: 30,
-            child: PhoneMockup(imagePath: ImagePaths.copickHero[0], rotateDeg: -7),
+            child: PhoneMockup(imageUrl: imageUrls[0], rotateDeg: -7),
           ),
           Positioned(
             left: 78,
             top: 8,
-            child: PhoneMockup(imagePath: ImagePaths.copickHero[1], rotateDeg: 4),
+            child: PhoneMockup(imageUrl: imageUrls[1], rotateDeg: 4),
           ),
           Positioned(
             right: -16,
             top: 38,
-            child: PhoneMockup(imagePath: ImagePaths.copickHero[2], rotateDeg: 9),
+            child: PhoneMockup(imageUrl: imageUrls[2], rotateDeg: 9),
           ),
         ],
       ),

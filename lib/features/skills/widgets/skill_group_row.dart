@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../data/portfolio_data.dart';
+import '../../../data/models/skill_model.dart';
 import 'skill_chip.dart';
 
 class SkillGroupRow extends StatelessWidget {
-  final SkillGroupData data;
+  final SkillGroupModel data;
 
   const SkillGroupRow({super.key, required this.data});
 

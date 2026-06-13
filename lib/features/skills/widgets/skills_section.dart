@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/common/spacing.dart';
 import '../../../core/design/cards/surface_card.dart';
 import '../../../core/design/shared/section_header.dart';
-import '../../../data/portfolio_data.dart';
+import '../../../data/portfolio_scope.dart';
 import 'skill_group_row.dart';
 
 class SkillsSection extends StatelessWidget {
@@ -10,6 +10,8 @@ class SkillsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final skills = PortfolioScope.of(context).skills;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -17,9 +19,7 @@ class SkillsSection extends StatelessWidget {
         const SizedBox(height: Spacing.lg),
         SurfaceCard(
           child: Column(
-            children: PortfolioData.skills
-                .map((g) => SkillGroupRow(data: g))
-                .toList(),
+            children: skills.map((g) => SkillGroupRow(data: g)).toList(),
           ),
         ),
       ],

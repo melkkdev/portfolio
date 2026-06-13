@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../data/portfolio_data.dart';
+import '../../../data/models/project_model.dart';
 
 class StatItem extends StatelessWidget {
-  final StatData data;
+  final StatModel data;
 
   const StatItem({super.key, required this.data});
 

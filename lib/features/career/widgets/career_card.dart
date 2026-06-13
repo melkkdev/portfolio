@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/design/cards/surface_card.dart';
-import '../../../data/portfolio_data.dart';
+import '../../../data/models/career_model.dart';
 
 class CareerCard extends StatelessWidget {
-  final CareerData career;
+  final CareerModel career;
 
   const CareerCard({super.key, required this.career});
 
