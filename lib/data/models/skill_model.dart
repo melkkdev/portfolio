@@ -16,4 +16,10 @@ class SkillGroupModel {
       highlights: List<String>.from((map['highlights'] as List?) ?? []),
     );
   }
+
+  Map<String, dynamic> toMap() => {
+        'label': label,
+        'skills': skills,
+        'highlights': highlights,
+      };
 }

@@ -56,6 +56,12 @@ class PortfolioRepository {
   static Future<void> updateIntro(List<String> paragraphs) =>
       _col.doc('intro').set({'paragraphs': paragraphs});
 
+  static Future<void> updateCareers(List<CareerModel> careers) =>
+      _col.doc('careers').set({'items': careers.map((c) => c.toMap()).toList()});
+
+  static Future<void> updateSkills(List<SkillGroupModel> groups) =>
+      _col.doc('skills').set({'groups': groups.map((g) => g.toMap()).toList()});
+
   static Future<void> saveProject(ProjectModel project) =>
       _projectItems.doc(project.id).set(project.toMap());
 
@@ -73,29 +79,4 @@ class PortfolioRepository {
 
   static String generateProjectId() =>
       'project_${DateTime.now().millisecondsSinceEpoch}';
-
-  /// "(Poien)" → "(fouren)" 텍스트 1회성 마이그레이션.
-  /// 영향받은 프로젝트 수를 반환.
-  static Future<int> fixCompanyName() async {
-    final snap = await _projectItems.get();
-    int count = 0;
-    for (final doc in snap.docs) {
-      final data = doc.data() as Map<String, dynamic>;
-      final rows = List<Map<String, dynamic>>.from(data['rows'] as List? ?? []);
-      bool changed = false;
-      final updatedRows = rows.map((r) {
-        final value = r['value'] as String? ?? '';
-        if (value.contains('(Poien)')) {
-          changed = true;
-          return {...r, 'value': value.replaceAll('(Poien)', '(fouren)')};
-        }
-        return r;
-      }).toList();
-      if (changed) {
-        await doc.reference.update({'rows': updatedRows});
-        count++;
-      }
-    }
-    return count;
-  }
 }

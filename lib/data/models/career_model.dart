@@ -19,4 +19,11 @@ class CareerModel {
       bullets: List<String>.from(map['bullets'] as List),
     );
   }
+
+  Map<String, dynamic> toMap() => {
+        'company': company,
+        'period': period,
+        'role': role,
+        'bullets': bullets,
+      };
 }
