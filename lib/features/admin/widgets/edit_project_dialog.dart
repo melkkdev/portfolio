@@ -123,8 +123,8 @@ class _EditProjectDialogState extends State<EditProjectDialog> {
     );
     if (result == null) return;
 
-    // 첫 번째 이미지로 가로/세로형 자동 감지 (아직 감지 안 된 경우만)
-    if (_isLandscape == null && result.files.isNotEmpty) {
+    // 새 이미지를 고를 때마다 첫 번째 파일로 가로/세로형 재감지
+    if (result.files.isNotEmpty) {
       final bytes = result.files.first.bytes;
       if (bytes != null) {
         try {
