@@ -73,4 +73,29 @@ class PortfolioRepository {
 
   static String generateProjectId() =>
       'project_${DateTime.now().millisecondsSinceEpoch}';
+
+  /// "(Poien)" → "(fouren)" 텍스트 1회성 마이그레이션.
+  /// 영향받은 프로젝트 수를 반환.
+  static Future<int> fixCompanyName() async {
+    final snap = await _projectItems.get();
+    int count = 0;
+    for (final doc in snap.docs) {
+      final data = doc.data() as Map<String, dynamic>;
+      final rows = List<Map<String, dynamic>>.from(data['rows'] as List? ?? []);
+      bool changed = false;
+      final updatedRows = rows.map((r) {
+        final value = r['value'] as String? ?? '';
+        if (value.contains('(Poien)')) {
+          changed = true;
+          return {...r, 'value': value.replaceAll('(Poien)', '(fouren)')};
+        }
+        return r;
+      }).toList();
+      if (changed) {
+        await doc.reference.update({'rows': updatedRows});
+        count++;
+      }
+    }
+    return count;
+  }
 }

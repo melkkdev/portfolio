@@ -33,6 +33,22 @@ class _PortraitGalleryState extends State<PortraitGallery>
   }
 
   @override
+  void didUpdateWidget(PortraitGallery oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.imageUrls.length != widget.imageUrls.length) {
+      final halfWidth = _itemWidth * widget.imageUrls.length;
+      _controller.duration = Duration(
+        milliseconds: (halfWidth / _pixelsPerSecond * 1000).round(),
+      );
+      if (_loopActive) {
+        _controller.stop();
+        _loopActive = false;
+        // 다음 build의 addPostFrameCallback에서 재시작
+      }
+    }
+  }
+
+  @override
   void deactivate() {
     // 위젯이 트리에서 제거되기 전에 애니메이션을 멈춰
     // EngineFlutterView가 dispose된 뒤 프레임이 도착하는 것을 방지
