@@ -2,10 +2,10 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 
-class DesktopGallery extends StatelessWidget {
+class LandscapeGallery extends StatelessWidget {
   final List<String> imageUrls;
 
-  const DesktopGallery({super.key, required this.imageUrls});
+  const LandscapeGallery({super.key, required this.imageUrls});
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +38,7 @@ class DesktopGallery extends StatelessWidget {
                       color: AppColors.lineSoft,
                       child: const Center(
                         child: Icon(
-                          Icons.desktop_windows_outlined,
+                          Icons.aspect_ratio_rounded,
                           color: AppColors.muted,
                           size: 40,
                         ),

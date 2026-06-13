@@ -7,8 +7,8 @@ import '../../../data/portfolio_scope.dart';
 import '../../../data/repository/portfolio_repository.dart';
 import '../../admin/admin_scope.dart';
 import '../../admin/widgets/edit_project_dialog.dart';
-import 'desktop_gallery.dart';
-import 'phone_gallery.dart';
+import 'desktop_gallery.dart'; // LandscapeGallery
+import 'phone_gallery.dart'; // PortraitGallery
 import 'stat_item.dart';
 
 class ProjectCard extends StatelessWidget {
@@ -52,9 +52,9 @@ class ProjectCard extends StatelessWidget {
               ],
               if (project.imageUrls.isNotEmpty) ...[
                 const SizedBox(height: 24),
-                project.isDesktop
-                    ? DesktopGallery(imageUrls: project.imageUrls)
-                    : PhoneGallery(imageUrls: project.imageUrls),
+                project.isLandscape
+                    ? LandscapeGallery(imageUrls: project.imageUrls)
+                    : PortraitGallery(imageUrls: project.imageUrls),
               ],
               const SizedBox(height: 24),
               const Divider(color: AppColors.line, height: 1),

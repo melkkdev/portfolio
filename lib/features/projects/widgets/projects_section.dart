@@ -12,8 +12,21 @@ class ProjectsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final projects = PortfolioScope.of(context).projects;
-    final isAdmin = AdminScope.isAdmin(context);
+    final firestoreProjects = PortfolioScope.of(context).projects;
+    final notifier = AdminScope.of(context);
+    final isAdmin = notifier.isAdmin;
+    final pendingIds = isAdmin ? notifier.pendingOrderIds : null;
+
+    // 드래그 순서 변경이 있으면 그 순서로 표시 (Firestore 저장 전에도 즉시 반영)
+    final displayProjects = pendingIds != null
+        ? [
+            ...pendingIds
+                .where((id) => firestoreProjects.any((p) => p.id == id))
+                .map((id) => firestoreProjects.firstWhere((p) => p.id == id)),
+            // pendingIds에 없는 프로젝트(새로 추가된 경우)는 끝에 추가
+            ...firestoreProjects.where((p) => !pendingIds.contains(p.id)),
+          ]
+        : firestoreProjects;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -26,7 +39,7 @@ class ProjectsSection extends StatelessWidget {
               TextButton.icon(
                 onPressed: () => EditProjectDialog.show(
                   context,
-                  allProjects: projects,
+                  allProjects: firestoreProjects,
                   onSaved: PortfolioScope.reloadOf(context),
                 ),
                 icon: const Icon(Icons.add_rounded,
@@ -39,7 +52,7 @@ class ProjectsSection extends StatelessWidget {
           ],
         ),
         const SizedBox(height: Spacing.lg),
-        ...projects.map(
+        ...displayProjects.map(
           (p) => Padding(
             padding: const EdgeInsets.only(bottom: 20),
             child: ProjectCard(project: p),

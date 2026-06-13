@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import '../../hero/widgets/phone_mockup.dart';
 
-class PhoneGallery extends StatefulWidget {
+class PortraitGallery extends StatefulWidget {
   final List<String> imageUrls;
 
-  const PhoneGallery({super.key, required this.imageUrls});
+  const PortraitGallery({super.key, required this.imageUrls});
 
   @override
-  State<PhoneGallery> createState() => _PhoneGalleryState();
+  State<PortraitGallery> createState() => _PortraitGalleryState();
 }
 
-class _PhoneGalleryState extends State<PhoneGallery>
+class _PortraitGalleryState extends State<PortraitGallery>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 

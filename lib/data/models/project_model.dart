@@ -60,7 +60,8 @@ class ProjectModel {
   final List<String> imageFilenames;
   final List<InfoRowModel> rows;
   final List<StatModel> stats;
-  final bool isDesktop;
+  /// true = 가로형 이미지 (Desktop / Tablet), false = 세로형 (Phone)
+  final bool isLandscape;
   final int order;
 
   const ProjectModel({
@@ -71,7 +72,7 @@ class ProjectModel {
     required this.imageFilenames,
     required this.rows,
     this.stats = const [],
-    this.isDesktop = false,
+    this.isLandscape = false,
     this.order = 0,
   });
 
@@ -85,7 +86,7 @@ class ProjectModel {
         imageFilenames: imageFilenames,
         rows: rows,
         stats: stats,
-        isDesktop: isDesktop,
+        isLandscape: isLandscape,
         order: order ?? this.order,
       );
 
@@ -111,7 +112,8 @@ class ProjectModel {
       stats: ((map['stats'] as List?) ?? [])
           .map((s) => StatModel.fromMap(s as Map<String, dynamic>))
           .toList(),
-      isDesktop: (map['isDesktop'] as bool?) ?? false,
+      // isLandscape 우선, 구버전 isDesktop 필드도 마이그레이션
+      isLandscape: (map['isLandscape'] as bool?) ?? (map['isDesktop'] as bool?) ?? false,
       order: (map['order'] as int?) ?? 0,
     );
   }
@@ -123,7 +125,7 @@ class ProjectModel {
         'imageFilenames': imageFilenames,
         'rows': rows.map((r) => r.toMap()).toList(),
         'stats': stats.map((s) => s.toMap()).toList(),
-        'isDesktop': isDesktop,
+        'isLandscape': isLandscape,
         'order': order,
       };
 }

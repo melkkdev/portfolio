@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -54,7 +55,8 @@ class _EditProjectDialogState extends State<EditProjectDialog> {
   late final TextEditingController _eyebrow;
   late final TextEditingController _title;
   late final TextEditingController _summary;
-  late bool _isDesktop;
+  /// null = 이미지 미선택(미감지), true = 가로형, false = 세로형
+  bool? _isLandscape;
 
   late List<_ImageEntry> _images;
   late List<_RowEntry> _rows;
@@ -73,7 +75,7 @@ class _EditProjectDialogState extends State<EditProjectDialog> {
     _eyebrow = TextEditingController(text: p?.eyebrow ?? '');
     _title = TextEditingController(text: p?.title ?? '');
     _summary = TextEditingController(text: p?.summary ?? '');
-    _isDesktop = p?.isDesktop ?? false;
+    _isLandscape = p?.isLandscape; // 기존 프로젝트면 저장값 사용, 새 프로젝트면 null(이미지 선택 후 자동감지)
 
     // 이미지: 기존 파일명 목록으로 초기화
     _images = (p?.imageFilenames ?? [])
@@ -119,13 +121,31 @@ class _EditProjectDialogState extends State<EditProjectDialog> {
       allowMultiple: true,
       withData: true,
     );
-    if (result != null) {
+    if (result == null) return;
+
+    // 첫 번째 이미지로 가로/세로형 자동 감지 (아직 감지 안 된 경우만)
+    if (_isLandscape == null && result.files.isNotEmpty) {
+      final bytes = result.files.first.bytes;
+      if (bytes != null) {
+        try {
+          final codec = await ui.instantiateImageCodec(bytes);
+          final frame = await codec.getNextFrame();
+          final img = frame.image;
+          final detected = img.width > img.height;
+          img.dispose();
+          if (mounted) setState(() => _isLandscape = detected);
+        } catch (_) {
+          if (mounted) setState(() => _isLandscape = false);
+        }
+      }
+    }
+
+    if (mounted) {
       setState(() {
         final startIdx = _images.length;
         for (int i = 0; i < result.files.length; i++) {
           final file = result.files[i];
           final ext = file.extension ?? 'jpg';
-          // 파일명 자동 생성: project_{순서}_{이미지번호}.ext
           final autoName = 'project_${_projectOrder}_${startIdx + i + 1}.$ext';
           _images.add(_ImageEntry.newFile(file, autoName: autoName));
         }
@@ -176,7 +196,7 @@ class _EditProjectDialogState extends State<EditProjectDialog> {
         eyebrow: _eyebrow.text.trim(),
         title: _title.text.trim(),
         summary: _summary.text.trim(),
-        isDesktop: _isDesktop,
+        isLandscape: _isLandscape ?? false,
         order: order,
         imageFilenames: _images
             .map((e) => e.filenameCtrl.text.trim())
@@ -263,21 +283,53 @@ class _EditProjectDialogState extends State<EditProjectDialog> {
                     _field('Eyebrow (상단 레이블)', _eyebrow),
                     _field('제목', _title),
                     _field('요약', _summary, maxLines: 4),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        const Text('Desktop 앱',
-                            style: TextStyle(fontSize: 13)),
-                        Switch(
-                          value: _isDesktop,
-                          onChanged: (v) =>
-                              setState(() => _isDesktop = v),
-                        ),
-                      ],
-                    ),
                     _sectionHeader('이미지'),
+                    // 자동 감지된 이미지 방향 배지
+                    if (_isLandscape != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: AppColors.green.withAlpha(20),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                    color: AppColors.green.withAlpha(80)),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    _isLandscape!
+                                        ? Icons.monitor_rounded
+                                        : Icons.smartphone_rounded,
+                                    size: 15,
+                                    color: AppColors.green,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    _isLandscape!
+                                        ? '가로형 — Desktop / Tablet'
+                                        : '세로형 — 스마트폰',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: AppColors.green,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     Text(
-                      '파일명 자동 생성: project_${_projectOrder}_번호.확장자  (수정 가능)',
+                      _isLandscape == null
+                          ? '이미지를 추가하면 가로/세로형이 자동 감지됩니다.'
+                          : '파일명 자동 생성: project_${_projectOrder}_번호.확장자  (수정 가능)',
                       style: const TextStyle(
                           fontSize: 11, color: AppColors.muted),
                     ),

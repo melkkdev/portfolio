@@ -26,9 +26,10 @@ class AdminNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// 드래그 순서 변경 시 메모리에 저장 (notifyListeners 호출 안 함)
+  /// 드래그 순서 변경 시 메모리에 저장 + 리빌드 트리거 (실시간 반영)
   void updateOrder(List<String> ids) {
     _pendingOrderIds = ids;
+    notifyListeners();
   }
 }
 
