@@ -1,195 +1,80 @@
-# HANDOFF.md — Flutter Web Portfolio
+# HANDOFF.md — Portfolio (Flutter Web)
 
-> 다음 Claude 에이전트를 위한 인계 문서. 인간이 아닌 AI가 읽는다고 가정하고 작성됨.
+> 다음 Claude 에이전트를 위한 인계 문서.
 
----
+## 브랜치 & 커밋 상태
+- 현재 브랜치: `main`
+- 미커밋 변경사항: clean
+- 최근 커밋
 
-## 브랜치 상태
+| 해시 | 메시지 |
+|------|--------|
+| db2bedd | fix: dev_constants 커밋 추가 및 gitignore 제거 (빌드 실패 수정) |
+| 127dfea | feat: UI 개선 및 관리자 기능 강화 |
+| 6ddad06 | chore: 불필요한 파일 정리 |
+| e59c77f | fix: 폰트 경고 해결 및 index.html 정리 |
+| ce6cef5 | feat: 프로필 히어로 이미지 Firebase Storage 업로드 방식으로 전환 |
 
-- **현재 브랜치**: `feature/firestore-text-data`
-- **작업 기준 브랜치**: `main` (병합 전)
-- **워킹트리**: clean (미커밋 없음) ← 커밋 필요
+## 이번 세션에서 완료된 작업
 
-### 커밋 히스토리 (최신순)
+- **StyledText 위젯** (`lib/core/design/shared/styled_text.dart`): `**굵게**` / `[[초록+굵게]]` 인라인 마크업 파서 및 렌더러
+- **MarkupTextField 위젯** (`lib/core/design/shared/markup_text_field.dart`): B / B(green) 툴바 버튼이 있는 서식 입력 필드. 드래그 선택 후 버튼 클릭 시 selection이 풀리는 Flutter Web 버그 있음 (onTapDown 방식 사용 중이나 완전히 해결되지 않음)
+- **ProjectCard 그린 배너 헤더**: eyebrow + title + summary를 초록 배경 헤더로 통합 (`SurfaceCard(padding: EdgeInsets.zero)`)
+- **InfoRow**: `showDivider` 파라미터, 수직 패딩 11px, 라벨 초록 색상(`AppColors.green`) 적용
+- **SurfaceCard**: `clipBehavior: Clip.antiAlias` 추가
+- **LandscapeGallery**: 수직 나열 → PortraitGallery와 동일한 수평 슬라이딩 애니메이션 (280×498, 60px/s)
+- **CareerCard**: bullets / role에 `StyledText` 적용
+- **EditIntroDialog / EditProjectDialog / EditCareerDialog**: `MarkupTextField` 적용 (요약, 행 내용, 직책/역할, 업무 내용)
+- **Admin Debug 로그인**: `kDebugMode`에서 `dev_constants.dart`의 계정(`admin@admin.com` / `admin1234`)으로 자동 Firebase 로그인
+- **GitHub Actions** (`.github/workflows/deploy.yml`): main 브랜치 push 시 Flutter 빌드 → Vercel 자동 배포
+- **루트 index.html 삭제**: 구 HTML 포트폴리오 파일이 Vercel에서 Flutter 대신 서빙되던 문제 수정
+- **web/index.html**: 중복 viewport 메타 태그 제거
+- **main.dart**: EngineFlutterView disposed 오류 필터링 (debug 전용)
 
-| 해시 | 내용 |
-|------|------|
-| `98dc738` | fix: 이미지 교체 시 가로/세로형 항상 재감지 |
-| `e47f6a2` | feat: 드래그 순서 실시간 반영 + 이미지 방향 자동 감지 |
-| `eacb468` | fix: EngineFlutterView 오류, 고정 행 잠금, 내용 없음 표시, 회사명 수정 |
-| `ce35b72` | feat: admin mode CRUD + order management via drag & drop |
-| `8d8dc4d` | feat: Firebase 연동 및 PhoneGallery 애니메이션 구현 |
-| `31e2f68` | feat: Flutter web portfolio 초기 구현 |
-| `091935e` | init: add portfolio HTML |
+## 현재 진행 중이던 작업
 
----
-
-## 프로젝트 개요
-
-Flutter web 포트폴리오 사이트. 정적 HTML에서 Flutter로 전환, Firebase 백엔드 연동.
-
-- **Flutter**: 3.29.3 / Dart 3.7.2
-- **패키지**: `firebase_core ^3.13.1`, `cloud_firestore ^5.6.7`, `firebase_storage ^12.4.5`, `firebase_auth ^5.3.1`, `file_picker ^8.1.2`
-- **Firebase 프로젝트**: `melkk-dev`
-- **Storage 버킷**: `melkk-dev.firebasestorage.app`
-- **이미지 URL 패턴**: `https://firebasestorage.googleapis.com/v0/b/melkk-dev.firebasestorage.app/o/images%2F{filename}?alt=media`
-- **Firestore 규칙**: `read: if true; write: if request.auth != null`
-
----
-
-## 아키텍처 핵심
-
-### 상태 관리 레이어
-
-```
-PortfolioApp (StatefulWidget)
-  └─ AdminScope (InheritedNotifier<AdminNotifier>)      ← 관리자 모드 상태
-       └─ PortfolioScope (InheritedWidget)               ← 포트폴리오 데이터
-            └─ MaterialApp → PortfolioPage
-```
-
-- `AdminNotifier` — `isAdmin`, `pendingOrderIds` 보유. `exit()` 호출 시 `_handleAdminExit` 콜백 실행 (순서 WriteBatch 저장 후 signOut)
-- `PortfolioScope` — `data: PortfolioState`, `onReload: Future<void> Function()` 보유. `reloadOf(context)` = reload 콜백 getter
-- `_PortfolioAppState._reload()` — Firestore 재조회 후 setState
-
-### Firestore 구조
-
-```
-portfolio/
-  profile          → ProfileModel
-  intro            → { paragraphs: List<String> }
-  skills           → { groups: List }
-  careers          → { items: List }
-  projects/items/
-    project_0      → ProjectModel (imageFilenames, rows, stats, order, isLandscape, ...)
-    project_1      → ...
-```
-
-### 이미지 저장 방식
-
-- Firestore에는 **파일명만** 저장: `imageFilenames: ['project_0_1.jpg', ...]`
-- URL은 런타임에 `buildImageUrl(filename)` 으로 조합
-- 업로드 시 파일명 자동생성 규칙: `project_{order}_{imageIndex+1}.{ext}`
-- 구버전 `imageUrls` 포맷 → `fromMap`에서 regex로 파일명 추출하여 마이그레이션
-
----
-
-## 완료된 기능
-
-### 1. Flutter Web 포트폴리오 UI (커밋 `31e2f68`)
-- Hero / Intro / Skills / Career / Projects 5개 섹션
-- `PhoneMockup` + `LandscapeGallery` 컴포넌트
-- `AnimationController` + `Transform.translate` + `OverflowBox` 무한 스크롤
-
-### 2. Firebase 연동 (커밋 `8d8dc4d`)
-- Firestore에서 모든 텍스트 데이터 로딩
-- `PortfolioState.load()` → 5개 collection 병렬 조회
-- `imageFilenames` 모델로 마이그레이션 (구버전 `imageUrls` 자동 변환)
-
-### 3. 관리자 모드 (커밋 `ce35b72`)
-- Firebase Auth 로그인 → `AdminScope.enter()`
-- **프로필/인트로 편집**: `EditProfileDialog`, `EditIntroDialog`
-- **프로젝트 추가/수정/삭제**: `EditProjectDialog`
-  - `file_picker`로 이미지 선택 → Firebase Storage 업로드
-  - `imageFilenames` Firestore 저장
-  - 기본 5개 행 (소속·연계, 업무 기간, 플랫폼, 주요 기능, 기술 스택) `isFixed: true`로 잠금
-- **순서 관리**: `ProjectReorderPanel` (우측 고정 패널, `ReorderableListView`)
-  - 드래그 → `AdminNotifier.updateOrder()` 메모리 저장
-  - 관리자 모드 종료 시 `WriteBatch`로 일괄 저장
-- **바리어 클릭 방지**: 모든 편집 다이얼로그 `barrierDismissible: false`
-
-### 4. 버그 픽스 및 개선 (커밋 `eacb468`, `e47f6a2`, `98dc738`)
-- `PortraitGallery` EngineFlutterView 오류: `deactivate()`에서 `_controller.stop()` + `addPostFrameCallback`으로 루프 시작 지연
-- `PortraitGallery.didUpdateWidget`: 이미지 개수 변경 시 `_controller.duration` 갱신
-- `InfoRow`: 내용(value)이 비면 이탤릭 "없음" 표시 (레이블 기준 X)
-- 이미지 방향 자동 감지: `dart:ui.instantiateImageCodec`으로 width/height 비교, 항상 재감지
-- `isDesktop` → `isLandscape` 리네임 (fromMap에서 구버전 `isDesktop` 필드도 마이그레이션)
-- 갤러리 클래스 리네임: `DesktopGallery` → `LandscapeGallery`, `PhoneGallery` → `PortraitGallery`
-- 드래그 순서 변경이 본 화면에 즉시 반영 (`AdminNotifier.updateOrder` → `notifyListeners` → `ProjectsSection` 재빌드)
-- `AdminFab`: `StatefulWidget`으로 전환, 종료 중 스피너 + 버튼 비활성화
-- `AdminBanner`: 회사명 마이그레이션 버튼 추가 (`fixCompanyName()` 트리거)
-
----
-
-## 현재 알려진 미완성 사항 / TODO
-
-### 즉시 해결 필요
-
-1. **Firestore 실데이터 회사명 수정**
-   - 관리자 모드 진입 → 상단 배너의 **"Poien→fouren 수정"** 버튼 클릭으로 해결 가능
-   - `PortfolioRepository.fixCompanyName()` 이 영향받은 문서만 `rows` 필드 업데이트
-
-2. **`main` 브랜치 병합 미완료**
-   - `feature/firestore-text-data` → `main` PR/merge 아직 안 함
-   - `git checkout main && git merge feature/firestore-text-data` 실행 필요
-
-### 장기 개선 사항
-
-3. **`EditProjectDialog` 이미지 순서 변경 불가**
-   - 기존 이미지를 드래그로 순서 바꾸는 기능 없음
-   - 현재는 삭제 후 재업로드해야 함
-   - 구현 시: `ReorderableListView` + 이미지 썸네일 + `_filenames` 리스트 재정렬
-
----
-
-## 핵심 파일 맵
-
-```
-lib/
-  app/
-    app.dart                     # _PortfolioAppState, _handleAdminExit(WriteBatch 순서저장)
-  core/
-    design/shared/info_row.dart  # value 비면 "없음" (이탤릭)
-    theme/app_theme.dart         # AppColors, AppTheme
-    common/spacing.dart          # Spacing 상수
-  data/
-    models/
-      project_model.dart         # imageFilenames, imageUrls getter, copyWith(order), isLandscape
-      profile_model.dart         # toMap() 포함
-    portfolio_scope.dart         # InheritedWidget + reloadOf()
-    portfolio_state.dart         # 전체 데이터 holder
-    repository/
-      portfolio_repository.dart  # saveProject / saveProjects(batch) / deleteProject / fixCompanyName()
-    seed/seed_firestore.dart     # 초기 데이터 (회사명 수정됨)
-  features/
-    admin/
-      admin_scope.dart           # AdminNotifier(onExit) + AdminScope
-      admin_service.dart         # Firebase Auth signIn/signOut
-      widgets/
-        admin_banner.dart        # 상단 배너 + 회사명 마이그레이션 버튼 (StatefulWidget)
-        admin_fab.dart           # 잠금버튼 / "종료" FAB (StatefulWidget, 로딩 스피너)
-        edit_profile_dialog.dart # barrierDismissible: false
-        edit_intro_dialog.dart   # barrierDismissible: false
-        edit_project_dialog.dart # isFixed 행, 파일명 자동생성, 방향 자동감지, barrierDismissible: false
-        login_dialog.dart        # barrierDismissible: false
-        project_reorder_panel.dart # ReorderableListView, updateOrder()
-    home/portfolio_page.dart     # Stack + Positioned(reorder panel)
-    projects/widgets/
-      desktop_gallery.dart       # LandscapeGallery (가로형 이미지)
-      phone_gallery.dart         # PortraitGallery (세로형 이미지, didUpdateWidget 포함)
-      project_card.dart          # 편집/삭제 버튼 (isAdmin)
-      projects_section.dart      # 프로젝트 추가 버튼 (isAdmin) + pendingIds 실시간 반영
-```
-
----
+GitHub Actions로 Vercel 자동 배포 진행 중 (워크플로우 #2 실행 중, 첫 빌드라 15~20분 소요 예상)
 
 ## 실패한 접근 방식 (재시도 금지)
 
 | 시도 | 실패 이유 |
 |------|-----------|
-| `ScrollController` + `Timer` + `jumpTo()` 무한스크롤 | Flutter web에서 scroll layout이 매 프레임 재계산되어 "disposed EngineFlutterView" 크래시 |
-| `SingleChildScrollView` + `NeverScrollableScrollPhysics` + `jumpTo()` | `NeverScrollableScrollPhysics`가 `jumpTo()` 차단 |
-| `AnimationController.repeat()` in `initState` (deactivate 없음) | hot reload 시 dispose 후에도 pending 프레임이 발생해 EngineFlutterView 오류 |
-| 편집 다이얼로그에서 순서 변경 + saveProjects (매 저장마다) | 사용자 요청으로 "모드 종료 시 일괄 저장"으로 변경 |
-| `generateProjectId()` async (Firestore 쿼리로 다음 번호 계산) | 동시성 문제 가능성 + 불필요한 읽기 → sync timestamp 방식으로 교체 |
-| `_pickFiles`에서 `_isLandscape == null` 조건 확인 후 감지 | 기존 프로젝트는 이미 `_isLandscape` 값이 있어 조건 false → 항상 재감지로 변경 |
+| `Listener.onPointerDown`으로 selection 저장 | Flutter Web에서 FocusManager가 같은 타이밍에 selection을 초기화함 |
+| `Focus(canRequestFocus: false)`로 focus 탈취 방지 | Flutter Web Canvas 렌더러에서 효과 없음 |
+| `_savedSel` + controller listener (non-collapsed만 저장) | 포커스 손실 시점에 이미 selection이 collapsed로 변경됨 |
+| `GestureDetector.onTapDown`으로 wrap 실행 | Flutter Web에서 FocusManager보다 늦게 실행됨 |
+| Firebase 익명 로그인으로 debug 진입 | Firebase Console에서 익명 인증이 비활성화되어 있어 Firestore 권한 오류 |
+| `flutter_quill` 사용 | Delta ↔ 마크업 변환 복잡성으로 사용자가 포기 선택 |
 
----
+## 남은 TODO
 
-## 환경 정보
+### 즉시 해결 필요
+- 없음
 
-- **OS**: Windows 11 Pro
-- **Shell**: PowerShell (primary) + Bash (Git Bash)
-- **Firebase 사용자**: `dltkdalsdla@gmail.com`
-- **Git 사용자**: `melkkdev`
-- **작업 디렉토리**: `c:\Users\tkdals\dev\app\portfolio`
+### 나중에 해도 되는 것
+- [ ] `MarkupTextField` 드래그 선택 후 버튼 클릭 시 selection 유지 문제 (`flutter_quill` 등 외부 패키지 대체 검토)
+- [ ] Firebase Console에서 `admin@admin.com` 계정 생성 확인 (debug 로그인용)
+- [ ] 기술 스택 섹션 등 다른 곳에 StyledText 추가 적용 검토
+
+## 핵심 아키텍처 결정사항
+
+- **마크업 형식**: `**텍스트**` = 굵게, `[[텍스트]]` = 굵게+초록. `[[**텍스트**]]` 사용 시 `**`는 자동 제거됨
+- **이미지 저장**: Firebase Storage (`images/` 경로). 모델에는 파일명만 저장, URL은 getter로 생성
+- **Vercel 배포**: `build/web/.vercel/project.json`을 GitHub Actions에서 동적 생성 후 `vercel` CLI로 배포
+- **Vercel 프로젝트**: project name "web", projectId/orgId는 GitHub Secret에 저장
+
+## 주요 파일 위치
+
+| 파일 | 역할 |
+|------|------|
+| `lib/core/design/shared/styled_text.dart` | 인라인 마크업 렌더러 |
+| `lib/core/design/shared/markup_text_field.dart` | B/B(green) 툴바 텍스트 에디터 |
+| `lib/core/design/shared/info_row.dart` | 프로젝트 상세 정보 행 |
+| `lib/core/design/cards/surface_card.dart` | 카드 컨테이너 |
+| `lib/features/projects/widgets/project_card.dart` | 프로젝트 카드 (그린 배너 헤더) |
+| `lib/features/projects/widgets/desktop_gallery.dart` | 가로 이미지 슬라이딩 갤러리 |
+| `lib/features/projects/widgets/phone_gallery.dart` | 세로 이미지 슬라이딩 갤러리 |
+| `lib/features/admin/widgets/login_dialog.dart` | 관리자 로그인 (debug 자동 로그인 포함) |
+| `lib/core/constants/dev_constants.dart` | debug 로그인용 계정 상수 |
+| `.github/workflows/deploy.yml` | GitHub Actions Vercel 자동 배포 |
+| `lib/data/repository/portfolio_repository.dart` | Firestore CRUD |
