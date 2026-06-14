@@ -16,6 +16,7 @@ class SurfaceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: padding ?? const EdgeInsets.all(Spacing.lg),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(Spacing.cardRadius),

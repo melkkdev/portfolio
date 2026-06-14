@@ -6,6 +6,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/design/shared/markup_text_field.dart';
 import '../../../data/models/project_model.dart';
 import '../../../data/repository/portfolio_repository.dart';
 
@@ -282,7 +283,14 @@ class _EditProjectDialogState extends State<EditProjectDialog> {
                     _sectionHeader('기본 정보'),
                     _field('Eyebrow (상단 레이블)', _eyebrow),
                     _field('제목', _title),
-                    _field('요약', _summary, maxLines: 4),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: MarkupTextField(
+                        controller: _summary,
+                        labelText: '요약',
+                        maxLines: 4,
+                      ),
+                    ),
                     _sectionHeader('이미지'),
                     // 자동 감지된 이미지 방향 배지
                     if (_isLandscape != null)
@@ -538,13 +546,10 @@ class _EditProjectDialogState extends State<EditProjectDialog> {
                 ),
               ),
             const SizedBox(height: 8),
-            TextField(
+            MarkupTextField(
               controller: entry.value,
+              labelText: '내용',
               maxLines: 2,
-              decoration: const InputDecoration(
-                labelText: '내용', // 값 → 내용
-                isDense: true,
-              ),
             ),
             const SizedBox(height: 8),
             TextField(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/design/shared/markup_text_field.dart';
 import '../../../data/repository/portfolio_repository.dart';
 
 class EditIntroDialog extends StatefulWidget {
@@ -83,13 +84,9 @@ class _EditIntroDialogState extends State<EditIntroDialog> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(
-                            child: TextField(
+                            child: MarkupTextField(
                               controller: e.value,
-                              maxLines: 5,
-                              decoration: InputDecoration(
-                                labelText: '단락 ${e.key + 1}',
-                                alignLabelWithHint: true,
-                              ),
+                              labelText: '단락 ${e.key + 1}',
                             ),
                           ),
                           const SizedBox(width: 4),

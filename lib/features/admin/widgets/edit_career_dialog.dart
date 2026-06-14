@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/design/shared/markup_text_field.dart';
 import '../../../data/models/career_model.dart';
 import '../../../data/repository/portfolio_repository.dart';
 
@@ -224,10 +225,10 @@ class _CareerEditor extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          TextField(
+          MarkupTextField(
             controller: career.role,
-            decoration: const InputDecoration(
-                labelText: '직책 / 역할', isDense: true),
+            labelText: '직책 / 역할',
+            maxLines: 2,
           ),
           const SizedBox(height: 16),
           const Text(
@@ -249,13 +250,10 @@ class _CareerEditor extends StatelessWidget {
                           radius: 3, backgroundColor: AppColors.green),
                     ),
                     Expanded(
-                      child: TextField(
+                      child: MarkupTextField(
                         controller: e.value,
-                        maxLines: null,
-                        decoration: InputDecoration(
-                          hintText: '업무 내용 ${e.key + 1}',
-                          isDense: true,
-                        ),
+                        labelText: '업무 내용 ${e.key + 1}',
+                        maxLines: 3,
                       ),
                     ),
                     IconButton(

@@ -7,8 +7,8 @@ import '../../../data/portfolio_scope.dart';
 import '../../../data/repository/portfolio_repository.dart';
 import '../../admin/admin_scope.dart';
 import '../../admin/widgets/edit_project_dialog.dart';
-import 'desktop_gallery.dart'; // LandscapeGallery
-import 'phone_gallery.dart'; // PortraitGallery
+import 'desktop_gallery.dart';
+import 'phone_gallery.dart';
 import 'stat_item.dart';
 
 class ProjectCard extends StatelessWidget {
@@ -19,58 +19,94 @@ class ProjectCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isAdmin = AdminScope.isAdmin(context);
+    final rows = project.rows;
 
     return Stack(
       children: [
         SurfaceCard(
+          padding: EdgeInsets.zero,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                project.eyebrow,
-                style: AppTheme.mono(fontSize: 11, color: AppColors.muted),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                project.title,
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.ink,
+              // ── 그린 배너 헤더 ──────────────────────────────────
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+                decoration: const BoxDecoration(
+                  color: AppColors.green,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      project.eyebrow,
+                      style: AppTheme.mono(
+                        fontSize: 11,
+                        color: Colors.white.withValues(alpha: 0.75),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      project.title,
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                        height: 1.2,
+                      ),
+                    ),
+                    if (project.summary.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      Text(
+                        project.summary,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.white.withValues(alpha: 0.85),
+                          height: 1.7,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
-              if (project.summary.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                Text(
-                  project.summary,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: AppColors.inkSoft,
-                    height: 1.75,
-                  ),
+
+              // ── 갤러리 ───────────────────────────────────────────
+              if (project.imageUrls.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+                  child: project.isLandscape
+                      ? LandscapeGallery(imageUrls: project.imageUrls)
+                      : PortraitGallery(imageUrls: project.imageUrls),
                 ),
-              ],
-              if (project.imageUrls.isNotEmpty) ...[
-                const SizedBox(height: 24),
-                project.isLandscape
-                    ? LandscapeGallery(imageUrls: project.imageUrls)
-                    : PortraitGallery(imageUrls: project.imageUrls),
-              ],
-              const SizedBox(height: 24),
-              const Divider(color: AppColors.line, height: 1),
-              const SizedBox(height: 16),
-              ...project.rows.map(
-                (r) => InfoRow(label: r.label, value: r.value, url: r.url),
+
+              // ── 상세 정보 ─────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (int i = 0; i < rows.length; i++)
+                      InfoRow(
+                        label: rows[i].label,
+                        value: rows[i].value,
+                        url: rows[i].url,
+                        showDivider: i < rows.length - 1,
+                      ),
+                  ],
+                ),
               ),
+
+              // ── 통계 ─────────────────────────────────────────────
               if (project.stats.isNotEmpty) ...[
-                const SizedBox(height: 20),
                 const Divider(color: AppColors.line, height: 1),
-                const SizedBox(height: 20),
-                Wrap(
-                  spacing: 32,
-                  runSpacing: 16,
-                  children:
-                      project.stats.map((s) => StatItem(data: s)).toList(),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
+                  child: Wrap(
+                    spacing: 32,
+                    runSpacing: 16,
+                    children:
+                        project.stats.map((s) => StatItem(data: s)).toList(),
+                  ),
                 ),
               ],
             ],
@@ -85,7 +121,7 @@ class ProjectCard extends StatelessWidget {
               children: [
                 _ActionButton(
                   icon: Icons.edit_rounded,
-                  color: AppColors.green,
+                  color: AppColors.greenDeep,
                   label: '편집',
                   onTap: () => EditProjectDialog.show(
                     context,

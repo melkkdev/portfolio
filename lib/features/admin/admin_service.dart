@@ -9,4 +9,6 @@ class AdminService {
       _auth.signInWithEmailAndPassword(email: email, password: password);
 
   static Future<void> signOut() => _auth.signOut();
+
+  static Future<void> signInAnonymously() => _auth.signInAnonymously();
 }

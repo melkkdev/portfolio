@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/constants/dev_constants.dart';
 import '../admin_scope.dart';
 import '../admin_service.dart';
 
@@ -88,6 +90,26 @@ class _LoginDialogState extends State<LoginDialog> {
         ),
       ),
       actions: [
+        if (kDebugMode)
+          TextButton(
+            onPressed: () async {
+              setState(() => _loading = true);
+              try {
+                await AdminService.signIn(kDevAdminEmail, kDevAdminPassword);
+                if (context.mounted) {
+                  AdminScope.of(context).enter();
+                  Navigator.of(context).pop();
+                }
+              } on FirebaseAuthException catch (e) {
+                setState(() {
+                  _error = e.message ?? '로그인 실패';
+                  _loading = false;
+                });
+              }
+            },
+            child: const Text('Debug 진입',
+                style: TextStyle(color: Colors.orange)),
+          ),
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('취소'),

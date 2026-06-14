@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/design/cards/surface_card.dart';
+import '../../../core/design/shared/styled_text.dart';
 import '../../../data/models/career_model.dart';
 
 class CareerCard extends StatelessWidget {
@@ -35,9 +36,9 @@ class CareerCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 6),
-          Text(
-            career.role,
-            style: const TextStyle(fontSize: 13, color: AppColors.muted),
+          StyledText(
+            text: career.role,
+            baseStyle: const TextStyle(fontSize: 13, color: AppColors.muted, height: 1.5),
           ),
           const SizedBox(height: 16),
           const Divider(color: AppColors.line, height: 1),
@@ -56,9 +57,9 @@ class CareerCard extends StatelessWidget {
                     ),
                   ),
                   Expanded(
-                    child: Text(
-                      b,
-                      style: const TextStyle(
+                    child: StyledText(
+                      text: b,
+                      baseStyle: const TextStyle(
                         fontSize: 14,
                         color: AppColors.inkSoft,
                         height: 1.65,
