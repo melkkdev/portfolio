@@ -44,5 +44,3 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# 로컬 개발 전용 — 커밋 금지
-lib/core/constants/dev_constants.dart
