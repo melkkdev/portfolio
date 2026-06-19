@@ -1,24 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/design/cards/surface_card.dart';
 import '../../../core/design/shared/info_row.dart';
 import '../../../data/models/project_model.dart';
-import '../../../data/portfolio_scope.dart';
+import '../../../data/portfolio_provider.dart';
 import '../../../data/repository/portfolio_repository.dart';
-import '../../admin/admin_scope.dart';
+import '../../admin/admin_provider.dart';
 import '../../admin/widgets/edit_project_dialog.dart';
 import 'desktop_gallery.dart';
 import 'phone_gallery.dart';
 import 'stat_item.dart';
 
-class ProjectCard extends StatelessWidget {
+class ProjectCard extends ConsumerWidget {
   final ProjectModel project;
 
   const ProjectCard({super.key, required this.project});
 
   @override
-  Widget build(BuildContext context) {
-    final isAdmin = AdminScope.isAdmin(context);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isAdmin = ref.watch(adminProvider.select((s) => s.isAdmin));
     final rows = project.rows;
 
     return Stack(
@@ -126,8 +127,8 @@ class ProjectCard extends StatelessWidget {
                   onTap: () => EditProjectDialog.show(
                     context,
                     project: project,
-                    allProjects: PortfolioScope.of(context).projects,
-                    onSaved: PortfolioScope.reloadOf(context),
+                    allProjects: ref.read(portfolioProvider).requireValue.projects,
+                    onSaved: ref.read(portfolioProvider.notifier).reload,
                   ),
                 ),
                 const SizedBox(width: 6),
@@ -135,7 +136,7 @@ class ProjectCard extends StatelessWidget {
                   icon: Icons.delete_rounded,
                   color: Colors.red,
                   label: '삭제',
-                  onTap: () => _confirmDelete(context),
+                  onTap: () => _confirmDelete(context, ref),
                 ),
               ],
             ),
@@ -144,8 +145,8 @@ class ProjectCard extends StatelessWidget {
     );
   }
 
-  Future<void> _confirmDelete(BuildContext context) async {
-    final reload = PortfolioScope.reloadOf(context);
+  Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
+    final reload = ref.read(portfolioProvider.notifier).reload;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(

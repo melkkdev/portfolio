@@ -1,22 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
-import '../admin_scope.dart';
+import '../admin_provider.dart';
 import '../admin_service.dart';
 import 'login_dialog.dart';
 
-class AdminFab extends StatefulWidget {
+class AdminFab extends ConsumerStatefulWidget {
   const AdminFab({super.key});
 
   @override
-  State<AdminFab> createState() => _AdminFabState();
+  ConsumerState<AdminFab> createState() => _AdminFabState();
 }
 
-class _AdminFabState extends State<AdminFab> {
+class _AdminFabState extends ConsumerState<AdminFab> {
   bool _exiting = false;
 
   @override
   Widget build(BuildContext context) {
-    final isAdmin = AdminScope.isAdmin(context);
+    final isAdmin = ref.watch(adminProvider.select((s) => s.isAdmin));
 
     if (isAdmin) {
       return FloatingActionButton.extended(
@@ -25,7 +26,7 @@ class _AdminFabState extends State<AdminFab> {
             : () async {
                 setState(() => _exiting = true);
                 try {
-                  await AdminScope.of(context).exit();
+                  await ref.read(adminProvider.notifier).exit();
                   if (mounted) AdminService.signOut();
                 } finally {
                   if (mounted) setState(() => _exiting = false);

@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/common/spacing.dart';
 import '../../../core/design/shared/section_header.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../data/portfolio_scope.dart';
-import '../../admin/admin_scope.dart';
+import '../../../data/portfolio_provider.dart';
+import '../../admin/admin_provider.dart';
 import '../../admin/widgets/edit_career_dialog.dart';
 import 'career_card.dart';
 
-class CareerSection extends StatelessWidget {
+class CareerSection extends ConsumerWidget {
   const CareerSection({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final careers = PortfolioScope.of(context).careers;
-    final isAdmin = AdminScope.isAdmin(context);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final careers = ref.watch(portfolioProvider).requireValue.careers;
+    final isAdmin = ref.watch(adminProvider.select((s) => s.isAdmin));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -26,7 +27,7 @@ class CareerSection extends StatelessWidget {
                 onPressed: () => EditCareerDialog.show(
                   context,
                   careers: careers,
-                  onSaved: PortfolioScope.reloadOf(context),
+                  onSaved: ref.read(portfolioProvider.notifier).reload,
                 ),
                 icon: const Icon(Icons.edit_rounded,
                     size: 16, color: AppColors.green),

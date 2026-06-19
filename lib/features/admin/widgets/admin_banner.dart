@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
-import '../admin_scope.dart';
+import '../admin_provider.dart';
 
-class AdminBanner extends StatelessWidget {
+class AdminBanner extends ConsumerWidget {
   const AdminBanner({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    if (!AdminScope.isAdmin(context)) return const SizedBox.shrink();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isAdmin = ref.watch(adminProvider.select((s) => s.isAdmin));
+    if (!isAdmin) return const SizedBox.shrink();
 
     return Container(
       width: double.infinity,
