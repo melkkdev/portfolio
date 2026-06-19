@@ -129,9 +129,8 @@ class _ProjectReorderPanelState extends ConsumerState<ProjectReorderPanel> {
             child: ReorderableListView(
               padding: const EdgeInsets.symmetric(vertical: 4),
               buildDefaultDragHandles: false,
-              onReorder: (oldIndex, newIndex) {
+              onReorderItem: (oldIndex, newIndex) {
                 setState(() {
-                  if (newIndex > oldIndex) newIndex--;
                   final item = _items!.removeAt(oldIndex);
                   _items!.insert(newIndex, item);
                 });
