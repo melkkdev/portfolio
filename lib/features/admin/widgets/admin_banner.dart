@@ -11,16 +11,18 @@ class AdminBanner extends ConsumerWidget {
     final isAdmin = ref.watch(adminProvider.select((s) => s.isAdmin));
     if (!isAdmin) return const SizedBox.shrink();
 
+    final version = ref.watch(appVersionProvider).value;
+
     return Container(
       width: double.infinity,
       color: AppColors.green,
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-      child: const Row(
+      child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.edit_rounded, size: 14, color: Colors.white),
-          SizedBox(width: 8),
-          Text(
+          const Icon(Icons.edit_rounded, size: 14, color: Colors.white),
+          const SizedBox(width: 8),
+          const Text(
             '관리자 모드 — 각 섹션의 ✏️ 버튼으로 편집하세요',
             style: TextStyle(
               color: Colors.white,
@@ -28,6 +30,17 @@ class AdminBanner extends ConsumerWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
+          if (version != null) ...[
+            const SizedBox(width: 8),
+            Text(
+              '· $version',
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
         ],
       ),
     );

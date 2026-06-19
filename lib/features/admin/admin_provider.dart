@@ -1,9 +1,17 @@
 import 'package:flutter/foundation.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../data/portfolio_provider.dart';
 import '../../data/repository/portfolio_repository.dart';
 
 part 'admin_provider.g.dart';
+
+/// admin 배너에만 노출되는 앱 버전 표시 (pubspec.yaml의 version 값을 런타임에 읽음)
+@riverpod
+Future<String> appVersion(Ref ref) async {
+  final info = await PackageInfo.fromPlatform();
+  return 'v${info.version}+${info.buildNumber}';
+}
 
 class AdminUiState {
   final bool isAdmin;
