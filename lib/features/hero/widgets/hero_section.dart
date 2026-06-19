@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/common/spacing.dart';
 import '../../../core/design/cards/surface_card.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../data/portfolio_scope.dart';
-import '../../admin/admin_scope.dart';
+import '../../../data/portfolio_provider.dart';
+import '../../admin/admin_provider.dart';
 import '../../admin/widgets/edit_profile_dialog.dart';
 import 'phone_mockup.dart';
 
-class HeroSection extends StatelessWidget {
+class HeroSection extends ConsumerWidget {
   const HeroSection({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final profile = PortfolioScope.of(context).profile;
-    final isAdmin = AdminScope.isAdmin(context);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profile = ref.watch(portfolioProvider).requireValue.profile;
+    final isAdmin = ref.watch(adminProvider.select((s) => s.isAdmin));
     final isMobile = MediaQuery.of(context).size.width < 700;
 
     return Stack(
@@ -50,7 +51,7 @@ class HeroSection extends StatelessWidget {
               onTap: () => EditProfileDialog.show(
                 context,
                 profile: profile,
-                onSaved: PortfolioScope.reloadOf(context),
+                onSaved: ref.read(portfolioProvider.notifier).reload,
               ),
             ),
           ),

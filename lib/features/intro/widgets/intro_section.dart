@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/common/spacing.dart';
 import '../../../core/design/cards/surface_card.dart';
 import '../../../core/design/shared/section_header.dart';
 import '../../../core/design/shared/styled_text.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../data/portfolio_scope.dart';
-import '../../admin/admin_scope.dart';
+import '../../../data/portfolio_provider.dart';
+import '../../admin/admin_provider.dart';
 import '../../admin/widgets/edit_intro_dialog.dart';
 
-class IntroSection extends StatelessWidget {
+class IntroSection extends ConsumerWidget {
   const IntroSection({super.key});
 
   static const _baseStyle = TextStyle(
@@ -18,9 +19,9 @@ class IntroSection extends StatelessWidget {
   );
 
   @override
-  Widget build(BuildContext context) {
-    final paragraphs = PortfolioScope.of(context).intro;
-    final isAdmin = AdminScope.isAdmin(context);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final paragraphs = ref.watch(portfolioProvider).requireValue.intro;
+    final isAdmin = ref.watch(adminProvider.select((s) => s.isAdmin));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -33,7 +34,7 @@ class IntroSection extends StatelessWidget {
                 onPressed: () => EditIntroDialog.show(
                   context,
                   paragraphs: paragraphs,
-                  onSaved: PortfolioScope.reloadOf(context),
+                  onSaved: ref.read(portfolioProvider.notifier).reload,
                 ),
                 icon: const Icon(Icons.edit_rounded,
                     size: 14, color: AppColors.green),

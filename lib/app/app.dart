@@ -1,86 +1,47 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/theme/app_theme.dart';
-import '../data/portfolio_scope.dart';
-import '../data/portfolio_state.dart';
-import '../data/repository/portfolio_repository.dart';
-import '../features/admin/admin_scope.dart';
+import '../data/portfolio_provider.dart';
 import '../features/home/portfolio_page.dart';
 
-class PortfolioApp extends StatefulWidget {
-  final PortfolioState? initialState;
-
-  const PortfolioApp({super.key, PortfolioState? state}) : initialState = state;
+class PortfolioApp extends ConsumerWidget {
+  const PortfolioApp({super.key});
 
   @override
-  State<PortfolioApp> createState() => _PortfolioAppState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final portfolioAsync = ref.watch(portfolioProvider);
 
-class _PortfolioAppState extends State<PortfolioApp> {
-  PortfolioState? _state;
-  late final AdminNotifier _adminNotifier;
-
-  @override
-  void initState() {
-    super.initState();
-    _state = widget.initialState;
-    _adminNotifier = AdminNotifier(_handleAdminExit);
-  }
-
-  Future<void> _handleAdminExit(List<String>? pendingOrderIds) async {
-    if (pendingOrderIds == null || pendingOrderIds.isEmpty || _state == null) {
-      return;
-    }
-    final idToProject = {for (final p in _state!.projects) p.id: p};
-    final reordered = pendingOrderIds.asMap().entries
-        .where((e) => idToProject.containsKey(e.value))
-        .map((e) => idToProject[e.value]!.copyWith(order: e.key))
-        .toList();
-    try {
-      await PortfolioRepository.saveProjects(reordered);
-      await _reload();
-    } catch (e) {
-      debugPrint('order save failed: $e');
-    }
-  }
-
-  @override
-  void dispose() {
-    _adminNotifier.dispose();
-    super.dispose();
-  }
-
-  Future<void> _reload() async {
-    try {
-      final next = await PortfolioState.load();
-      if (mounted) setState(() => _state = next);
-    } catch (e) {
-      debugPrint('reload failed: $e');
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (_state == null) {
-      return MaterialApp(
+    return portfolioAsync.when(
+      data: (state) => MaterialApp(
+        title: state.profile.appTitle,
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.theme,
+        home: const PortfolioPage(),
+      ),
+      loading: () => MaterialApp(
+        title: 'Portfolio',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.theme,
+        home: const _LoadingScreen(),
+      ),
+      error: (error, stackTrace) => MaterialApp(
         title: 'Portfolio',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.theme,
         home: const _ErrorScreen(),
-      );
-    }
-
-    return AdminScope(
-      notifier: _adminNotifier,
-      child: PortfolioScope(
-        data: _state!,
-        onReload: _reload,
-        child: MaterialApp(
-          title: _state!.profile.appTitle,
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.theme,
-          home: const PortfolioPage(),
-        ),
       ),
+    );
+  }
+}
+
+class _LoadingScreen extends StatelessWidget {
+  const _LoadingScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      backgroundColor: AppColors.bg,
+      body: Center(child: CircularProgressIndicator(color: AppColors.muted)),
     );
   }
 }

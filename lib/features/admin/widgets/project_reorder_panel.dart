@@ -1,68 +1,78 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../data/portfolio_scope.dart';
-import '../admin_scope.dart';
+import '../../../data/models/project_model.dart';
+import '../../../data/portfolio_provider.dart';
+import '../admin_provider.dart';
 
-class ProjectReorderPanel extends StatefulWidget {
+class ProjectReorderPanel extends ConsumerStatefulWidget {
   const ProjectReorderPanel({super.key});
 
   @override
-  State<ProjectReorderPanel> createState() => _ProjectReorderPanelState();
+  ConsumerState<ProjectReorderPanel> createState() =>
+      _ProjectReorderPanelState();
 }
 
-class _ProjectReorderPanelState extends State<ProjectReorderPanel> {
+class _ProjectReorderPanelState extends ConsumerState<ProjectReorderPanel> {
   List<_Item>? _items;
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (!AdminScope.isAdmin(context)) {
-      _items = null;
-      return;
-    }
-    _syncFromScope();
-  }
+  /// 기존 _syncFromScope()와 동일한 동기화 로직: 사용자 정의 순서는 유지하고
+  /// 제목 업데이트 + 삭제된 항목 제거 + 새 항목은 끝에 추가.
+  void _syncFromProjects(List<ProjectModel> projects) {
+    final current = _items;
 
-  void _syncFromScope() {
-    final projects = PortfolioScope.of(context).projects;
-
-    if (_items == null) {
+    if (current == null) {
       setState(() {
         _items = projects.map((p) => _Item(p.id, p.title)).toList();
       });
       return;
     }
 
-    // 정렬된 ID 목록으로 추가/삭제 감지
     final newIds = (projects.map((p) => p.id).toList()..sort());
-    final currentIds = (_items!.map((i) => i.id).toList()..sort());
+    final currentIds = (current.map((i) => i.id).toList()..sort());
+    if (listEquals(newIds, currentIds)) return;
 
-    if (!listEquals(newIds, currentIds)) {
-      final newMap = {for (final p in projects) p.id: p.title};
-      final existingIds = _items!.map((i) => i.id).toSet();
+    final newMap = {for (final p in projects) p.id: p.title};
+    final existingIds = current.map((i) => i.id).toSet();
 
-      // 기존 사용자 정의 순서 유지, 제목 업데이트, 삭제된 항목 제거
-      final synced = _items!
-          .where((i) => newMap.containsKey(i.id))
-          .map((i) => _Item(i.id, newMap[i.id]!))
-          .toList();
+    final synced = current
+        .where((i) => newMap.containsKey(i.id))
+        .map((i) => _Item(i.id, newMap[i.id]!))
+        .toList();
 
-      // 새로 추가된 프로젝트를 끝에 추가
-      for (final p in projects) {
-        if (!existingIds.contains(p.id)) {
-          synced.add(_Item(p.id, p.title));
-        }
+    for (final p in projects) {
+      if (!existingIds.contains(p.id)) {
+        synced.add(_Item(p.id, p.title));
       }
-
-      setState(() => _items = synced);
-      AdminScope.of(context).updateOrder(synced.map((i) => i.id).toList());
     }
+
+    setState(() => _items = synced);
+    ref.read(adminProvider.notifier).updateOrder(synced.map((i) => i.id).toList());
   }
 
   @override
   Widget build(BuildContext context) {
-    if (!AdminScope.isAdmin(context)) return const SizedBox.shrink();
+    final isAdmin = ref.watch(adminProvider.select((s) => s.isAdmin));
+
+    // admin 진입/이탈 시 동기화 상태 초기화
+    ref.listen(adminProvider.select((s) => s.isAdmin), (prev, next) {
+      if (next) {
+        _syncFromProjects(ref.read(portfolioProvider).requireValue.projects);
+      } else {
+        setState(() => _items = null);
+      }
+    });
+
+    // admin 모드 중 프로젝트 목록(추가/삭제)이 바뀌면 재동기화
+    ref.listen(portfolioProvider, (prev, next) {
+      final projects = next.value;
+      if (projects != null && ref.read(adminProvider).isAdmin) {
+        _syncFromProjects(projects.projects);
+      }
+    });
+
+    if (!isAdmin) return const SizedBox.shrink();
 
     final items = _items ?? [];
 
@@ -125,7 +135,7 @@ class _ProjectReorderPanelState extends State<ProjectReorderPanel> {
                   final item = _items!.removeAt(oldIndex);
                   _items!.insert(newIndex, item);
                 });
-                AdminScope.of(context).updateOrder(
+                ref.read(adminProvider.notifier).updateOrder(
                   _items!.map((e) => e.id).toList(),
                 );
               },
