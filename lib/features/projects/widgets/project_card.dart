@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/design/cards/surface_card.dart';
+import '../../../core/design/shared/image_viewer.dart';
 import '../../../core/design/shared/info_row.dart';
 import '../../../data/models/project_model.dart';
 import '../../../data/portfolio_provider.dart';
@@ -75,9 +76,25 @@ class ProjectCard extends ConsumerWidget {
               if (project.imageUrls.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-                  child: project.isLandscape
-                      ? LandscapeGallery(imageUrls: project.imageUrls)
-                      : PortraitGallery(imageUrls: project.imageUrls),
+                  child: Stack(
+                    children: [
+                      project.isLandscape
+                          ? LandscapeGallery(imageUrls: project.imageUrls)
+                          : PortraitGallery(imageUrls: project.imageUrls),
+                      Positioned(
+                        right: 0,
+                        bottom: 0,
+                        child: _ExpandButton(
+                          onTap: () => showImageViewer(
+                            context,
+                            imageUrls: project.imageUrls,
+                            initialIndex: 0,
+                            title: project.eyebrow,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
 
               // ── 상세 정보 ─────────────────────────────────────────
@@ -175,6 +192,28 @@ class ProjectCard extends ConsumerWidget {
       await PortfolioRepository.deleteProject(project.id);
       await reload();
     }
+  }
+}
+
+class _ExpandButton extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _ExpandButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.black.withValues(alpha: 0.55),
+      shape: const CircleBorder(),
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: const Padding(
+          padding: EdgeInsets.all(8),
+          child: Icon(Icons.add_rounded, size: 20, color: Colors.white),
+        ),
+      ),
+    );
   }
 }
 

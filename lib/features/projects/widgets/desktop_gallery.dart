@@ -86,13 +86,20 @@ class _LandscapeGalleryState extends State<LandscapeGallery>
           });
 
           if (!needsLoop) {
-            return SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              physics: const NeverScrollableScrollPhysics(),
-              child: Row(
-                children: widget.imageUrls
-                    .map((url) => _ImageItem(url: url))
-                    .toList(),
+            return SizedBox(
+              width: constraints.maxWidth,
+              child: Center(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: widget.imageUrls
+                      .asMap()
+                      .entries
+                      .map((e) => _ImageItem(
+                            url: e.value,
+                            isLast: e.key == widget.imageUrls.length - 1,
+                          ))
+                      .toList(),
+                ),
               ),
             );
           }
@@ -127,13 +134,14 @@ class _LandscapeGalleryState extends State<LandscapeGallery>
 
 class _ImageItem extends StatelessWidget {
   final String url;
+  final bool isLast;
 
-  const _ImageItem({required this.url});
+  const _ImageItem({required this.url, this.isLast = false});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(right: 16),
+      padding: EdgeInsets.only(right: isLast ? 0 : 16),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(10),
         child: Container(
