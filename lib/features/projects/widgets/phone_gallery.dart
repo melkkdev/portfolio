@@ -91,18 +91,24 @@ class _PortraitGalleryState extends State<PortraitGallery>
           });
 
           if (!needsLoop) {
-            return SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              physics: const NeverScrollableScrollPhysics(),
-              child: Row(
-                children: widget.imageUrls
-                    .map(
-                      (url) => Padding(
-                        padding: const EdgeInsets.only(right: 16),
-                        child: PhoneMockup(imageUrl: url),
-                      ),
-                    )
-                    .toList(),
+            return SizedBox(
+              width: constraints.maxWidth,
+              child: Center(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: widget.imageUrls
+                      .asMap()
+                      .entries
+                      .map(
+                        (e) => Padding(
+                          padding: EdgeInsets.only(
+                            right: e.key < widget.imageUrls.length - 1 ? 16 : 0,
+                          ),
+                          child: PhoneMockup(imageUrl: e.value),
+                        ),
+                      )
+                      .toList(),
+                ),
               ),
             );
           }
