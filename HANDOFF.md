@@ -8,88 +8,84 @@
 
 ## 현재 상태
 
-이번 세션은 새로 시작된 세션으로 코드 변경 없이 HANDOFF.md만 현재 저장소 상태에 맞춰 재정비함. 직전 커밋(`4c7a76a`)에서 프로젝트 이미지 확대 보기(핀치줌/슬라이드) 및 본문 내 GitHub 주소 자동 링크 기능이 이미 구현·커밋되어 있음. **working tree는 깨끗함** — 단, `devtools_options.yaml`이 추적되지 않은 파일로 남아 있음(Dart DevTools가 자동 생성한 로컬 설정 파일, git에 올릴 필요 없음 — `.gitignore` 추가 검토 가능). favicon 변경 작업은 여전히 미착수.
+이번 세션에서 **포트폴리오 전체를 PDF로 다운로드하는 기능**을 구현하고, 관련 버그를 수정했습니다.
 
-## 구현된 파일
+### 완료된 작업
 
-### 상태관리 (Riverpod codegen)
+1. **PDF 다운로드 기능 추가**
+   - Hero 섹션 "PDF 다운로드" 버튼 → `showPortfolioPdfPreview()` 호출
+   - `PdfPreview` 미리보기 다이얼로그 (인쇄 버튼 / 웹에서는 공유 버튼 숨김)
+
+2. **`PdfTooBigPageException` 수정** (두 차례)
+   - 1차: `pw.Container`/`pw.Column`으로 섹션을 통째로 감싸면 페이지 분할이 안 됨 → 각 항목을 `MultiPage` 최상위 리스트 요소로 분리
+   - 2차: `pw.Image(fit: BoxFit.cover)` + 높이 미지정 → pdf 패키지가 이미지를 페이지 전체 높이로 렌더링 → `PdfTooBigPageException`. 명시적 `width`/`height` + `BoxFit.contain` + 행별 분리(`pw.Row`)로 수정. **테스트는 이미지를 실제로 다운로드하지 못해 이 경로가 실행되지 않아 통과했었음**.
+
+3. **UI/UX 개선**
+   - 웹에서 공유 버튼 숨김 (`allowSharing: !kIsWeb`)
+   - 프로젝트마다 새 페이지 시작 (`pw.NewPage()`)
+   - `StatefulWidget` + `Future.delayed(80ms)`: 다이얼로그가 로딩 인디케이터를 먼저 렌더링한 뒤 PDF 생성 시작
+   - `Isolate.run()` 논블로킹 시도 → **dart4web에서 `dart:isolate` 미지원** → 제거. 현재는 `Future.delayed(80ms)` 구조가 UX를 담당함
+
+4. **회귀 테스트 추가** (`test/pdf_smoke_test.dart`)
+
+### working tree
+
+`flutter analyze` — No issues found.  
+`flutter test` — All tests passed.  
+모든 변경사항 **이번 세션 마지막에 커밋됨**.
+
+---
+
+## 이번 세션에 추가/수정된 파일
 
 | 파일 | 역할 |
 |------|------|
-| `lib/data/portfolio_provider.dart` | `@Riverpod(keepAlive: true) class Portfolio extends _$Portfolio` — `build()`에서 `PortfolioState.load()`, `reload()`로 화면 깜빡임 없이 재로드. 생성 provider: `portfolioProvider` |
-| `lib/features/admin/admin_provider.dart` | `AdminUiState`(isAdmin, pendingOrderIds) + `@Riverpod(keepAlive: true) class Admin extends _$Admin` — `enter()`/`exit()`(재정렬 저장+reload 흡수)/`updateOrder()`. 추가로 `@riverpod Future<String> appVersion(Ref ref)` — `package_info_plus`로 pubspec version을 런타임에 읽어 `v1.0.0+1` 형식 반환 (admin 배너 전용). 생성 provider: `adminProvider`, `appVersionProvider` |
-| `lib/data/portfolio_provider.g.dart`, `lib/features/admin/admin_provider.g.dart` | build_runner 생성 코드 (수동 수정 금지) |
+| `lib/core/pdf/portfolio_pdf_builder.dart` | PDF 문서 생성 로직. `PortfolioPdfBuilder.build()` 공개 API. `_buildContent()`를 별도 메서드로 분리해 폰트 폴백 경로와 공유. |
+| `lib/core/pdf/pdf_export_dialog.dart` | PDF 미리보기 다이얼로그. `StatefulWidget`으로 로딩 상태 관리. `allowSharing: !kIsWeb`. `canChangePageFormat: false`. |
+| `lib/features/hero/widgets/hero_section.dart` | Hero 섹션에 PDF 다운로드 버튼(`_PdfDownloadButton`) 추가. 전체 `PortfolioState`를 watch하도록 변경. |
+| `test/pdf_smoke_test.dart` | 회귀 테스트. 실제 운영 규모(이미지 9장/프로젝트 × 4개)로 예외 없이 PDF 생성되는지 + 페이지 수 50 미만인지 검증. |
+| `pubspec.yaml` | `pdf: ^3.13.0`, `printing: ^5.15.0`, `http: ^1.6.0` 추가 |
 
-### 이미지 확대 보기 / 마크업 링크 (최신 추가분, `4c7a76a`)
+---
 
-| 파일 | 역할 |
-|------|------|
-| `lib/core/design/shared/image_viewer.dart` | `showImageViewer(context, imageUrls, initialIndex, title)` — 흰 배경 `Dialog` + `PageView.builder` + `InteractiveViewer`(`minScale:1, maxScale:4`)로 핀치/드래그 줌. 이미지 2장 이상이면 좌우 `_SlideButton`과 `n / total` 캡션 표시 |
-| `lib/core/common/modal_styles.dart` | 모달 공통 padding/텍스트 스타일(`radius`, `headerPadding`, `contentPadding`, `headerTitle`, `caption` 등) 한곳에 모음 — 다른 모달에서도 재사용 가능 |
-| `lib/core/design/shared/styled_text.dart` | 인라인 마크업 렌더러. `**text**`(굵게), `[[text]]`(초록+굵게)에 더해 `_kToken` 정규식에 `github.com/...` 패턴을 named group(`url`)으로 추가해 자동 클릭 링크(`url_launcher`)로 변환 |
-| `lib/features/projects/widgets/project_card.dart` | 갤러리 우측 하단에 `_ExpandButton`(반투명 원형, `Icons.add_rounded`) 추가 — 탭 시 `showImageViewer` 호출 |
-| `lib/features/projects/widgets/desktop_gallery.dart`, `phone_gallery.dart` | 이미지가 적어 캐러셀 애니메이션이 없는 경우 섹션 폭에 맞춰 가운데 정렬되도록 레이아웃 보정 |
-
-### 위젯 (ConsumerWidget/ConsumerStatefulWidget)
-
-`lib/main.dart`(ProviderScope), `lib/app/app.dart`(AsyncValue.when으로 loading/error/data 분기), `lib/features/hero/widgets/hero_section.dart`, `intro_section.dart`, `skills_section.dart`, `career_section.dart`, `projects_section.dart`, `lib/features/admin/widgets/admin_banner.dart`(버전 표시 포함), `admin_fab.dart`, `login_dialog.dart`, `project_reorder_panel.dart`(가장 복잡 — `ref.listen`으로 동기화)
-
-### 무수정 (의도적)
-
-`lib/data/portfolio_state.dart`, `lib/data/repository/portfolio_repository.dart`, `lib/features/admin/admin_service.dart`, 편집 다이얼로그 5개(`edit_profile_dialog.dart`, `edit_intro_dialog.dart`, `edit_skills_dialog.dart`, `edit_career_dialog.dart`, `edit_project_dialog.dart`) — `onSaved` 콜백 시그니처가 그대로 유지됨
-
-## 설치된 패키지 (pubspec.yaml 기준)
+## 설치된 패키지 (이번 세션에 추가됨)
 
 ```yaml
-environment:
-  sdk: ^3.9.0   # Flutter 3.44.2 / Dart 3.12.2
-
 dependencies:
-  flutter_riverpod: ^3.3.2
-  riverpod_annotation: ^4.0.3
-  package_info_plus: ^9.0.1
-  firebase_core: ^3.13.1
-  cloud_firestore: ^5.6.7
-  firebase_storage: ^12.4.5
-  firebase_auth: ^5.3.1
-  google_fonts: ^6.3.2
-  url_launcher: ^6.3.2
-  cached_network_image: ^3.4.1
-  file_picker: ^8.1.2
-  cupertino_icons: ^1.0.8
-
-dev_dependencies:
-  riverpod_generator: ^4.0.4
-  build_runner: ^2.15.0
-  flutter_lints: ^5.0.0
+  pdf: ^3.13.0       # PDF 문서 생성 (순수 Dart)
+  printing: ^5.15.0  # PdfGoogleFonts (한글 폰트), PdfPreview 위젯
+  http: ^1.6.0       # 이미지 바이트 fetch (PDF 임베드용)
 ```
 
-**⚠️ Flutter SDK 전역 업그레이드 이력**: 기존 Flutter 3.29.3(Dart 3.7.2)에서 `flutter upgrade --force`로 3.44.2(Dart 3.12.2)까지 올림. 이 과정에서 전역 SDK 설치본(`C:\Users\tkdals\Desktop\sdk\flutter`)에 있던 로컬 패치(`flutter_tools/chrome.dart`의 `--disable-web-security` 플래그, CORS 회피용)가 사라짐 — 사용자 확인 후 의도적으로 버린 것. 필요시 `flutter run -d chrome --web-browser-flag="--disable-web-security"`로 동일 효과 재현 가능.
-
-## 차단 이슈
-
-- **favicon 디자인/변경 미착수**: 사용자가 favicon 변경 + 디자인 요청. 이미지 생성 AI 툴 없음, 시스템에 ImageMagick(`magick`/`convert`)·Inkscape·`rsvg-convert`·Python PIL 모두 미설치 확인됨(`/c/Windows/system32/convert`는 Windows 자체 유틸리티로 무관). SVG를 코드로 작성해 변환할 도구가 없는 상태 — 다음 세션에서 ① 사용자에게 이미지 파일을 받거나 ② ImageMagick/Pillow 설치 후 진행 필요. 기존 favicon 위치: `web/favicon.png`, `web/icons/`(`Icon-192.png`, `Icon-512.png`, `Icon-maskable-192.png`, `Icon-maskable-512.png`).
-- **`devtools_options.yaml` 미추적 상태**: Dart DevTools가 로컬에서 자동 생성한 파일로, 추적/커밋 불필요. 신경 쓰지 않아도 무방하나 거슬리면 `.gitignore`에 추가.
+---
 
 ## 다음 구현할 기능 (체크리스트)
 
 - [x] Riverpod codegen 마이그레이션
-- [x] Flutter/Dart SDK 최신 업그레이드 + Riverpod 3.x 적용
+- [x] Flutter 3.44.2 업그레이드 + Riverpod 3.x 적용
 - [x] admin 배너 버전 표시 추가
-- [x] 프로젝트 이미지 확대 보기(핀치줌/슬라이드) 추가
-- [x] 본문 텍스트 내 GitHub 주소 자동 링크 변환 추가
-- [x] 전체 변경사항 commit + push (origin/main 최신: `4c7a76a`)
-- [ ] **favicon 변경/디자인** — 위 차단 이슈 참고, 도구 설치 또는 사용자 제공 이미지 필요
-- [ ] (선택) admin 로그인 → 편집 다이얼로그 → 드래그 재정렬 전체 플로우 추가 회귀 테스트
-- [ ] (선택) 새로 추가된 이미지 뷰어/링크 기능에 대한 실제 브라우저 클릭 검증 (이번 세션에서는 미수행)
+- [x] 프로젝트 이미지 확대 보기 추가
+- [x] 본문 텍스트 내 GitHub 주소 자동 링크 변환
+- [x] PDF 다운로드 기능 (Hero 버튼 → 미리보기 → 인쇄/다운로드)
+- [x] PDF PdfTooBigPageException 버그 수정 (2회)
+- [x] 프로젝트 섹션마다 새 페이지 / 웹에서 공유 버튼 숨김
+- [x] 로딩 인디케이터 UX 개선 (StatefulWidget + Future.delayed)
+- [ ] **favicon 변경/디자인** — ImageMagick/Inkscape/PIL 미설치. 사용자에게 이미지 파일을 받거나 도구 설치 후 진행. 위치: `web/favicon.png`, `web/icons/`
+- [ ] (선택) admin 전체 플로우 회귀 테스트
+
+---
 
 ## 핵심 코드 패턴
 
-- **Provider 접근 패턴**: `ref.watch(portfolioProvider).requireValue.X` (데이터 읽기) / `ref.read(portfolioProvider.notifier).reload` (재로드 콜백, dialog의 `onSaved`에 그대로 전달) / `ref.watch(adminProvider.select((s) => s.isAdmin))` (admin 여부만 watch) / `ref.watch(adminProvider)` (전체 상태 필요 시)
-- **`reload()`는 AsyncLoading을 거치지 않음**: `state = await AsyncValue.guard(() => PortfolioState.load());` — 새 데이터 준비 전까지 기존 데이터 유지, 화면 깜빡임 없음. 이 패턴 유지할 것.
-- **Riverpod 3.x AsyncValue API 차이**: `valueOrNull` getter는 없고 `.value`가 바로 nullable 값을 반환함(2.x의 `valueOrNull`과 동일 역할). `requireValue`는 그대로 존재.
-- **`.g.dart` 파일 직접 수정 금지** — 수정 필요시 `dart run build_runner build`로 재생성 (Riverpod 3.x에서는 `--delete-conflicting-outputs` 옵션이 제거됨/기본 동작으로 흡수됨).
-- **모달 스타일은 `ModalStyles`로 통일**: 새 모달을 추가할 때 padding/타이틀/캡션 스타일을 직접 하드코딩하지 말고 `lib/core/common/modal_styles.dart`의 상수를 재사용할 것.
-- **`StyledText`의 토큰 정규식 확장 패턴**: `_kToken`에 named group(`?<name>...`)을 추가하고 `_parse()`에서 `m.namedGroup('name')`으로 분기하는 방식으로 새로운 인라인 마크업(굵게/색상/링크 등)을 추가함. 새 토큰 추가 시 이 패턴을 따를 것.
-- **UI 검증 시 PowerShell 스크린샷+클릭 자동화 패턴**: 이 환경엔 별도 브라우저 자동화 툴(Playwright 등) 미설치. `flutter run -d chrome --web-port=PORT`로 백그라운드 실행 후, PowerShell의 `user32.dll` P/Invoke(`EnumWindows`/`GetWindowRect`/`SetCursorPos`/`mouse_event`)로 실제 Chrome 창을 찾아 좌표 클릭 + `System.Drawing`으로 스크린샷 캡처하는 방식으로 인터랙션을 실제 검증함. 다중 모니터 환경이라 좌표가 음수일 수 있음에 주의(`SystemInformation.VirtualScreen` 기준).
-- **ReorderableListView**: Flutter 3.44.2부터 `onReorder`가 deprecated, `onReorderItem` 사용 — newIndex가 이미 보정되어 들어오므로 `if (newIndex > oldIndex) newIndex--;` 같은 수동 보정 코드 넣지 말 것.
+- **Provider 접근**: `ref.watch(portfolioProvider).requireValue.X` / `ref.read(portfolioProvider.notifier).reload` / `ref.watch(adminProvider.select((s) => s.isAdmin))`
+- **`reload()`는 AsyncLoading을 거치지 않음**: `state = await AsyncValue.guard(...)` — 기존 데이터 유지, 화면 깜빡임 없음.
+- **Riverpod 3.x**: `.value`가 nullable 값 반환 (2.x의 `valueOrNull`과 동일). `requireValue`는 그대로.
+- **`.g.dart` 직접 수정 금지** — `dart run build_runner build`로 재생성.
+- **모달 스타일**: `lib/core/common/modal_styles.dart`의 `ModalStyles` 상수 재사용.
+- **`pdf` MultiPage 페이지 분할 규칙**: 최상위 리스트 항목이 `SpanningWidget`(`RichText`, `Table` 등)이 아니면 한 페이지 안에 통째로 들어가야 함. `Container`/`Column`으로 묶으면 `PdfTooBigPageException` 발생. 이미지는 `width`/`height` 모두 명시 + `BoxFit.contain` + 행(Row)별로 분리.
+- **PDF 한글 폰트**: `PdfGoogleFonts.notoSansKRRegular()`(printing 패키지) — 내부 캐시 있음. `TtfFont.data`가 공개 `ByteData` 필드이므로 직렬화 가능. 테스트 환경에서는 네트워크 차단으로 Helvetica 폴백 반환 → `regularFont is pw.TtfFont` 체크 후 분기 필요.
+- **`dart:isolate` Flutter Web 미지원**: `Isolate.run()`은 dart4web에서 크래시. `compute()`는 web에서 동기 실행(실질적 논블로킹 없음). Flutter Web PDF 논블로킹은 현재 불가능 — `Future.delayed`로 인디케이터 먼저 보여주는 것이 최선.
+- **PDF 미리보기 로딩 흐름**: `StatefulWidget._generatePdf()` → `Future.delayed(80ms)` → 폰트/이미지 fetch(인디케이터 돌아감) → `doc.addPage()` + `doc.save()` (동기 블로킹, 불가피) → `PdfPreview(build: (_) => Future.value(bytes))`.
+- **웹 PDF 다운로드**: `PdfPreview`의 인쇄 버튼(브라우저 인쇄 다이얼로그) 사용. 공유 버튼(`allowSharing: !kIsWeb`)은 웹에서 숨김.
+- **ReorderableListView**: Flutter 3.44.2부터 `onReorderItem` 사용 — `newIndex` 수동 보정 불필요.
+- **`StyledText` 토큰 규칙 동기화**: `styled_text.dart`의 `_kToken` 정규식을 바꾸면 `portfolio_pdf_builder.dart`의 `_parseStyledSpans`도 같이 수정해야 함.
