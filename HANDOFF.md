@@ -26,13 +26,21 @@
    - `StatefulWidget` + `Future.delayed(80ms)`: 다이얼로그가 로딩 인디케이터를 먼저 렌더링한 뒤 PDF 생성 시작
    - `Isolate.run()` 논블로킹 시도 → **dart4web에서 `dart:isolate` 미지원** → 제거. 현재는 `Future.delayed(80ms)` 구조가 UX를 담당함
 
-4. **회귀 테스트 추가** (`test/pdf_smoke_test.dart`)
+4. **`DataCloneError` 수정** (`lib/core/pdf/pdf_export_dialog.dart`)
+   - 증상: `PdfPreview`가 페이지를 전환할 때마다 `DataCloneError: ArrayBuffer at index 0 is already detached` 발생
+   - 원인: 브라우저의 Web Worker는 `postMessage` 시 `ArrayBuffer`를 **transfer**(소유권 이전, 복사 없음)하므로 원본이 detach됨. `PdfPreview`가 `build` 콜백을 재호출할 때 이미 비워진 버퍼를 재사용하려다 오류 발생
+   - 수정: `build: (_) => Future.value(_pdfBytes)` → `Future.value(Uint8List.fromList(_pdfBytes!))` — 매번 새 `ArrayBuffer`를 생성해 transfer 충돌 방지
+
+5. **CI Flutter 버전 수정** (`.github/workflows/deploy.yml`)
+   - `flutter-version: '3.29.3'` → `'3.44.2'` 로 올림 (프로젝트 버전과 일치)
+
+6. **회귀 테스트 추가** (`test/pdf_smoke_test.dart`)
 
 ### working tree
 
 `flutter analyze` — No issues found.  
 `flutter test` — All tests passed.  
-모든 변경사항 **이번 세션 마지막에 커밋됨**.
+모든 변경사항 커밋 및 `origin/main` 푸시 완료.
 
 ---
 
@@ -85,7 +93,8 @@ dependencies:
 - **`pdf` MultiPage 페이지 분할 규칙**: 최상위 리스트 항목이 `SpanningWidget`(`RichText`, `Table` 등)이 아니면 한 페이지 안에 통째로 들어가야 함. `Container`/`Column`으로 묶으면 `PdfTooBigPageException` 발생. 이미지는 `width`/`height` 모두 명시 + `BoxFit.contain` + 행(Row)별로 분리.
 - **PDF 한글 폰트**: `PdfGoogleFonts.notoSansKRRegular()`(printing 패키지) — 내부 캐시 있음. `TtfFont.data`가 공개 `ByteData` 필드이므로 직렬화 가능. 테스트 환경에서는 네트워크 차단으로 Helvetica 폴백 반환 → `regularFont is pw.TtfFont` 체크 후 분기 필요.
 - **`dart:isolate` Flutter Web 미지원**: `Isolate.run()`은 dart4web에서 크래시. `compute()`는 web에서 동기 실행(실질적 논블로킹 없음). Flutter Web PDF 논블로킹은 현재 불가능 — `Future.delayed`로 인디케이터 먼저 보여주는 것이 최선.
-- **PDF 미리보기 로딩 흐름**: `StatefulWidget._generatePdf()` → `Future.delayed(80ms)` → 폰트/이미지 fetch(인디케이터 돌아감) → `doc.addPage()` + `doc.save()` (동기 블로킹, 불가피) → `PdfPreview(build: (_) => Future.value(bytes))`.
+- **PDF 미리보기 로딩 흐름**: `StatefulWidget._generatePdf()` → `Future.delayed(80ms)` → 폰트/이미지 fetch(인디케이터 돌아감) → `doc.addPage()` + `doc.save()` (동기 블로킹, 불가피) → `PdfPreview(build: (_) => Future.value(Uint8List.fromList(bytes)))`.
+- **`DataCloneError` (Web Worker ArrayBuffer detach)**: `PdfPreview`의 `build` 콜백은 재호출될 수 있음. Web Worker가 `ArrayBuffer`를 transfer하면 원본이 detach되므로 `Uint8List.fromList()`로 매번 새 복사본을 만들어야 함.
 - **웹 PDF 다운로드**: `PdfPreview`의 인쇄 버튼(브라우저 인쇄 다이얼로그) 사용. 공유 버튼(`allowSharing: !kIsWeb`)은 웹에서 숨김.
 - **ReorderableListView**: Flutter 3.44.2부터 `onReorderItem` 사용 — `newIndex` 수동 보정 불필요.
 - **`StyledText` 토큰 규칙 동기화**: `styled_text.dart`의 `_kToken` 정규식을 바꾸면 `portfolio_pdf_builder.dart`의 `_parseStyledSpans`도 같이 수정해야 함.

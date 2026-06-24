@@ -130,7 +130,7 @@ class _PortfolioPdfPreviewDialogState
 
     // 이미 생성된 bytes를 그대로 반환 — format 재빌드 불필요하므로 canChangePageFormat: false
     return PdfPreview(
-      build: (_) => Future.value(_pdfBytes),
+      build: (_) => Future.value(Uint8List.fromList(_pdfBytes!)),
       pdfFileName: '${widget.state.profile.name}_portfolio.pdf',
       canChangeOrientation: false,
       canChangePageFormat: false,
