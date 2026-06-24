@@ -45,6 +45,9 @@ dependencies:
   flutter_riverpod: ^3.3.2
   riverpod_annotation: ^4.0.3
   package_info_plus: ^9.0.1
+  pdf: ^3.13.0
+  printing: ^5.15.0
+  http: ^1.6.0
 
 dev_dependencies:
   flutter_test:

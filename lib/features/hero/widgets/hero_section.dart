@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/common/spacing.dart';
 import '../../../core/design/cards/surface_card.dart';
+import '../../../core/pdf/pdf_export_dialog.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/portfolio_provider.dart';
 import '../../admin/admin_provider.dart';
@@ -14,7 +15,8 @@ class HeroSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final profile = ref.watch(portfolioProvider).requireValue.profile;
+    final state = ref.watch(portfolioProvider).requireValue;
+    final profile = state.profile;
     final isAdmin = ref.watch(adminProvider.select((s) => s.isAdmin));
     final isMobile = MediaQuery.of(context).size.width < 700;
 
@@ -26,7 +28,11 @@ class HeroSection extends ConsumerWidget {
               ? Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _HeroLeft(profile: profile),
+                    _HeroLeft(
+                      profile: profile,
+                      onDownloadPdf: () =>
+                          showPortfolioPdfPreview(context, state),
+                    ),
                     const SizedBox(height: 32),
                     _HeroPhones(imageUrls: profile.heroImageUrls),
                   ],
@@ -34,7 +40,13 @@ class HeroSection extends ConsumerWidget {
               : Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Expanded(child: _HeroLeft(profile: profile)),
+                    Expanded(
+                      child: _HeroLeft(
+                        profile: profile,
+                        onDownloadPdf: () =>
+                            showPortfolioPdfPreview(context, state),
+                      ),
+                    ),
                     const SizedBox(width: 36),
                     SizedBox(
                       width: 300,
@@ -97,8 +109,9 @@ class _AdminEditButton extends StatelessWidget {
 
 class _HeroLeft extends StatelessWidget {
   final dynamic profile;
+  final VoidCallback onDownloadPdf;
 
-  const _HeroLeft({required this.profile});
+  const _HeroLeft({required this.profile, required this.onDownloadPdf});
 
   @override
   Widget build(BuildContext context) {
@@ -156,7 +169,45 @@ class _HeroLeft extends StatelessWidget {
             ),
           ],
         ),
+        const SizedBox(height: 20),
+        _PdfDownloadButton(onTap: onDownloadPdf),
       ],
+    );
+  }
+}
+
+class _PdfDownloadButton extends StatelessWidget {
+  final VoidCallback onTap;
+  const _PdfDownloadButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.greenLight,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.picture_as_pdf_rounded,
+                  size: 16, color: AppColors.greenDeep),
+              SizedBox(width: 6),
+              Text(
+                'PDF 다운로드',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: AppColors.greenDeep,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
