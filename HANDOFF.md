@@ -2,99 +2,88 @@
 
 > 다음 Claude 에이전트를 위한 인계 문서.
 
-## 프로젝트 경로
+## 브랜치 & 커밋 상태
+- 현재 브랜치: `main`
+- 미커밋 변경사항: `devtools_options.yaml` (untracked, 무해한 IDE 설정 파일 — 신경 쓰지 않아도 됨)
+- 최근 커밋 5개:
 
-`C:\Users\tkdals\dev\app\portfolio`
+| hash | message |
+|------|---------|
+| 8aecaaa | security: dev_constants.dart 추적 해제 + gitignore 추가 |
+| 92a7203 | fix: PDF 미리보기 DataCloneError 수정 (ArrayBuffer detach) |
+| 0b9b955 | ci: Flutter 버전 3.29.3 → 3.44.2로 올리기 |
+| 881de18 | feat: 포트폴리오 PDF 다운로드 기능 추가 및 버그 수정 |
+| 4da4e38 | docs: HANDOFF.md 업데이트 (이미지 뷰어/GitHub 링크 기능 반영) |
 
-## 현재 상태
+> ⚠️ `8aecaaa` 이전 이력은 **`git-filter-repo`로 재작성되어 GitHub에 force-push된 상태**입니다 (아래 참고). 로컬에 이 저장소를 이미 클론해둔 다른 환경이 있다면 반드시 새로 clone 받아야 합니다 (fetch/merge/rebase로는 정합이 안 맞음).
 
-이번 세션에서 **포트폴리오 전체를 PDF로 다운로드하는 기능**을 구현하고, 관련 버그를 수정했습니다.
+## 이번 세션에서 완료된 작업
 
-### 완료된 작업
+### 1. 개인 프로젝트 → 포트폴리오 자동 업로드 도구 구축
+브라우저 로그인 없이 CLI 한 번으로 개인 프로젝트를 포트폴리오 Firestore/Storage에 등록할 수 있도록 구축했습니다.
 
-1. **PDF 다운로드 기능 추가**
-   - Hero 섹션 "PDF 다운로드" 버튼 → `showPortfolioPdfPreview()` 호출
-   - `PdfPreview` 미리보기 다이얼로그 (인쇄 버튼 / 웹에서는 공유 버튼 숨김)
+- **`tools/portfolio-upload/upload-project.mjs`**: Node.js CLI (`firebase-admin` 사용). JSON 스펙을 읽어서
+  - 이미지들을 Firebase Storage `images/`에 업로드 (파일명은 `project_{order}_{i}.{ext}` 규칙으로 `ProjectModel`과 동일하게 자동 생성)
+  - 첫 이미지 크기로 `isLandscape` 자동 감지(`image-size` 패키지, 미지정 시)
+  - Firestore `portfolio/projects/items/{id}`에 문서 write (`ProjectModel.toMap()`과 완전히 동일한 스키마)
+  - `--dry-run` 플래그로 실제 업로드 없이 계획만 미리보기 가능
+  - `id`/`order`를 JSON에 명시하면 **기존 문서 수정(덮어쓰기)**, 비우면(`null`) 새 프로젝트로 맨 끝에 추가
+- **`tools/portfolio-upload/example-project.json`**: 입력 JSON 형식 예시
+- **`.claude/commands/portfolio-add.md`**: `/portfolio-add <프로젝트명>` 슬래시커맨드. 프로젝트 폴더(README/git log/스크린샷) 조사 → 초안 작성 → 사용자 확인 → dry-run → 실제 업로드까지 자동 진행하는 워크플로 정의
+- 의존성 설치 완료 (`tools/portfolio-upload/node_modules`), `package-lock.json` 커밋됨
 
-2. **`PdfTooBigPageException` 수정** (두 차례)
-   - 1차: `pw.Container`/`pw.Column`으로 섹션을 통째로 감싸면 페이지 분할이 안 됨 → 각 항목을 `MultiPage` 최상위 리스트 요소로 분리
-   - 2차: `pw.Image(fit: BoxFit.cover)` + 높이 미지정 → pdf 패키지가 이미지를 페이지 전체 높이로 렌더링 → `PdfTooBigPageException`. 명시적 `width`/`height` + `BoxFit.contain` + 행별 분리(`pw.Row`)로 수정. **테스트는 이미지를 실제로 다운로드하지 못해 이 경로가 실행되지 않아 통과했었음**.
+**사전 준비물 (완료됨)**: Firebase 서비스 계정 키를 `portfolio/.secrets/service-account.json`에 저장함 (`.gitignore` 처리, git에는 없음). **이 키는 로컬에만 있고 재발급 전까지 이 컴퓨터가 아니면 도구가 동작하지 않음.**
 
-3. **UI/UX 개선**
-   - 웹에서 공유 버튼 숨김 (`allowSharing: !kIsWeb`)
-   - 프로젝트마다 새 페이지 시작 (`pw.NewPage()`)
-   - `StatefulWidget` + `Future.delayed(80ms)`: 다이얼로그가 로딩 인디케이터를 먼저 렌더링한 뒤 PDF 생성 시작
-   - `Isolate.run()` 논블로킹 시도 → **dart4web에서 `dart:isolate` 미지원** → 제거. 현재는 `Future.delayed(80ms)` 구조가 UX를 담당함
+### 2. Coupley 프로젝트를 포트폴리오에 실제 등록
+- 조사: `dev/app/coupley_dev/coupley` — README, git log(2026-06-12~06-27 개발), `docs/screenshots/`의 스크린샷 10장 중 8장 선정
+- Firestore 문서: `portfolio/projects/items/project_1788348737981` (order=6, 세로형/Phone)
+- rows 6개: 소속·연계 / 업무 기간 / 플랫폼 / 주요 기능 / 기술 스택 / **GitHub(→ https://github.com/melkkdev/coupley)**
+- 이미지 8장 → Storage `images/project_6_1.png` ~ `project_6_8.png`
+- 사용한 draft 파일: `tools/portfolio-upload/draft-coupley.json` (재실행 시 `id`/`order` 그대로 두면 같은 문서를 계속 수정 가능)
 
-4. **`DataCloneError` 수정** (`lib/core/pdf/pdf_export_dialog.dart`)
-   - 증상: `PdfPreview`가 페이지를 전환할 때마다 `DataCloneError: ArrayBuffer at index 0 is already detached` 발생
-   - 원인: 브라우저의 Web Worker는 `postMessage` 시 `ArrayBuffer`를 **transfer**(소유권 이전, 복사 없음)하므로 원본이 detach됨. `PdfPreview`가 `build` 콜백을 재호출할 때 이미 비워진 버퍼를 재사용하려다 오류 발생
-   - 수정: `build: (_) => Future.value(_pdfBytes)` → `Future.value(Uint8List.fromList(_pdfBytes!))` — 매번 새 `ArrayBuffer`를 생성해 transfer 충돌 방지
+### 3. 보안 사고 발견 및 조치 — 관리자 계정 정보 git 이력 노출
+관리자 로그인 계정을 확인하던 중, `lib/core/constants/dev_constants.dart`(email: `admin@admin.com`, password: `admin1234`)가 과거 커밋(`db2bedd: "dev_constants 커밋 추가 및 gitignore 제거"`)에서 `.gitignore`가 제거되며 **public 저장소(`melkkdev/portfolio`)에 평문으로 커밋되어 있던 것**을 발견, 다음과 같이 조치했습니다.
 
-5. **CI Flutter 버전 수정** (`.github/workflows/deploy.yml`)
-   - `flutter-version: '3.29.3'` → `'3.44.2'` 로 올림 (프로젝트 버전과 일치)
+1. 파일을 다시 git 추적에서 해제(`git rm --cached`)하고 `.gitignore`에 재등록 (커밋 `8aecaaa`) — 워킹 디렉토리 파일 자체는 유지되어 `kDevAdminEmail`/`kDevAdminPassword` 참조 코드는 정상 컴파일됨
+2. `git-filter-repo --path lib/core/constants/dev_constants.dart --invert-paths --force`로 **전체 커밋 이력에서 파일을 완전히 제거** (filter-repo가 안전장치로 `origin` remote를 자동 삭제 → 재등록함)
+3. `git push --force origin main`으로 GitHub에 재작성된 이력 반영, 원격에서도 해당 파일 이력이 사라진 것 확인 완료
 
-6. **회귀 테스트 추가** (`test/pdf_smoke_test.dart`)
+## 현재 진행 중이던 작업
+없음 — 위 3가지 작업 모두 완료된 상태에서 세션 종료.
 
-### working tree
+## 실패한 접근 방식 (재시도 금지)
 
-`flutter analyze` — No issues found.  
-`flutter test` — All tests passed.  
-모든 변경사항 커밋 및 `origin/main` 푸시 완료.
+| 시도 | 실패 이유 |
+|------|-----------|
+| `pip install git-filter-repo`로 실행 스크립트(`git-filter-repo.exe`) 설치 | Scripts 폴더 쓰기 권한 문제로 실패(WinError 2). 대신 `python C:/Python312/Lib/site-packages/git_filter_repo.py <args>`로 직접 실행하면 정상 동작함 |
+| Claude가 직접 `git push --force` 실행 | 자동 승인 분류기가 force-push를 파괴적 작업으로 차단. 사용자가 `!` 프리픽스로 직접 실행해야 함 (`git filter-repo` 실행도 최초 1회는 같은 이유로 차단되어 사용자 재승인 필요했음) |
 
----
+## 남은 TODO
 
-## 이번 세션에 추가/수정된 파일
+### 즉시 해결 필요
+- [ ] **Firebase 콘솔에서 `admin@admin.com` 비밀번호 변경**. git 이력에서 지워도 이미 유출됐던 비밀번호 자체는 무효화되지 않음 (GitHub 캐시나 이미 받아간 클론에 남아있을 수 있음). 변경 후 로컬 `lib/core/constants/dev_constants.dart`의 `kDevAdminPassword`도 새 값으로 갱신할 것 (그래야 관리자 로그인 다이얼로그의 "Debug 진입" 버튼이 계속 동작함)
+
+### 나중에 해도 되는 것
+- [ ] favicon 변경/디자인 — ImageMagick/Inkscape/PIL 미설치 상태로 이전 세션부터 보류 중. 위치: `web/favicon.png`, `web/icons/`
+- [ ] (선택) copick, agrodoctor 등 다른 회사 프로젝트도 `/portfolio-add`로 재정비하고 싶다면, 이미 등록된 기존 항목은 Firestore 콘솔이나 admin UI에서 문서 ID 확인 후 `id`/`order`를 지정한 draft json으로 수정 가능
+- [ ] (선택) admin 전체 플로우 회귀 테스트
+
+## 핵심 아키텍처 결정사항
+
+- **포트폴리오 자동 업로드는 "반자동"으로 설계함**: Claude가 프로젝트 조사 + 초안 작성까지는 하지만, 실제 Firestore/Storage 쓰기 전 항상 사용자 확인(`--dry-run` 결과 리뷰)을 거치도록 슬래시커맨드에 명시함. 실제 서비스 데이터를 확인 없이 덮어쓰는 완전자동화는 위험하다고 판단해 배제.
+- **서비스 계정 키는 로컬 전용, git에 절대 포함하지 않음** (`portfolio/.secrets/`, `.gitignore` 처리). 이 컴퓨터를 벗어나면 도구가 동작하지 않으므로, 다른 환경에서 쓰려면 Firebase 콘솔에서 키를 다시 발급받아 같은 경로에 저장해야 함.
+- **git 이력 재작성(filter-repo)은 개인 저장소(단독 작업자, 협업자 없음)라서 감행함.** 여러 명이 clone해서 쓰는 저장소였다면 force-push 후 전원이 재클론해야 하는 부담이 있어 신중히 판단할 것.
+
+## 주요 파일 위치
 
 | 파일 | 역할 |
 |------|------|
-| `lib/core/pdf/portfolio_pdf_builder.dart` | PDF 문서 생성 로직. `PortfolioPdfBuilder.build()` 공개 API. `_buildContent()`를 별도 메서드로 분리해 폰트 폴백 경로와 공유. |
-| `lib/core/pdf/pdf_export_dialog.dart` | PDF 미리보기 다이얼로그. `StatefulWidget`으로 로딩 상태 관리. `allowSharing: !kIsWeb`. `canChangePageFormat: false`. |
-| `lib/features/hero/widgets/hero_section.dart` | Hero 섹션에 PDF 다운로드 버튼(`_PdfDownloadButton`) 추가. 전체 `PortfolioState`를 watch하도록 변경. |
-| `test/pdf_smoke_test.dart` | 회귀 테스트. 실제 운영 규모(이미지 9장/프로젝트 × 4개)로 예외 없이 PDF 생성되는지 + 페이지 수 50 미만인지 검증. |
-| `pubspec.yaml` | `pdf: ^3.13.0`, `printing: ^5.15.0`, `http: ^1.6.0` 추가 |
-
----
-
-## 설치된 패키지 (이번 세션에 추가됨)
-
-```yaml
-dependencies:
-  pdf: ^3.13.0       # PDF 문서 생성 (순수 Dart)
-  printing: ^5.15.0  # PdfGoogleFonts (한글 폰트), PdfPreview 위젯
-  http: ^1.6.0       # 이미지 바이트 fetch (PDF 임베드용)
-```
-
----
-
-## 다음 구현할 기능 (체크리스트)
-
-- [x] Riverpod codegen 마이그레이션
-- [x] Flutter 3.44.2 업그레이드 + Riverpod 3.x 적용
-- [x] admin 배너 버전 표시 추가
-- [x] 프로젝트 이미지 확대 보기 추가
-- [x] 본문 텍스트 내 GitHub 주소 자동 링크 변환
-- [x] PDF 다운로드 기능 (Hero 버튼 → 미리보기 → 인쇄/다운로드)
-- [x] PDF PdfTooBigPageException 버그 수정 (2회)
-- [x] 프로젝트 섹션마다 새 페이지 / 웹에서 공유 버튼 숨김
-- [x] 로딩 인디케이터 UX 개선 (StatefulWidget + Future.delayed)
-- [ ] **favicon 변경/디자인** — ImageMagick/Inkscape/PIL 미설치. 사용자에게 이미지 파일을 받거나 도구 설치 후 진행. 위치: `web/favicon.png`, `web/icons/`
-- [ ] (선택) admin 전체 플로우 회귀 테스트
-
----
-
-## 핵심 코드 패턴
-
-- **Provider 접근**: `ref.watch(portfolioProvider).requireValue.X` / `ref.read(portfolioProvider.notifier).reload` / `ref.watch(adminProvider.select((s) => s.isAdmin))`
-- **`reload()`는 AsyncLoading을 거치지 않음**: `state = await AsyncValue.guard(...)` — 기존 데이터 유지, 화면 깜빡임 없음.
-- **Riverpod 3.x**: `.value`가 nullable 값 반환 (2.x의 `valueOrNull`과 동일). `requireValue`는 그대로.
-- **`.g.dart` 직접 수정 금지** — `dart run build_runner build`로 재생성.
-- **모달 스타일**: `lib/core/common/modal_styles.dart`의 `ModalStyles` 상수 재사용.
-- **`pdf` MultiPage 페이지 분할 규칙**: 최상위 리스트 항목이 `SpanningWidget`(`RichText`, `Table` 등)이 아니면 한 페이지 안에 통째로 들어가야 함. `Container`/`Column`으로 묶으면 `PdfTooBigPageException` 발생. 이미지는 `width`/`height` 모두 명시 + `BoxFit.contain` + 행(Row)별로 분리.
-- **PDF 한글 폰트**: `PdfGoogleFonts.notoSansKRRegular()`(printing 패키지) — 내부 캐시 있음. `TtfFont.data`가 공개 `ByteData` 필드이므로 직렬화 가능. 테스트 환경에서는 네트워크 차단으로 Helvetica 폴백 반환 → `regularFont is pw.TtfFont` 체크 후 분기 필요.
-- **`dart:isolate` Flutter Web 미지원**: `Isolate.run()`은 dart4web에서 크래시. `compute()`는 web에서 동기 실행(실질적 논블로킹 없음). Flutter Web PDF 논블로킹은 현재 불가능 — `Future.delayed`로 인디케이터 먼저 보여주는 것이 최선.
-- **PDF 미리보기 로딩 흐름**: `StatefulWidget._generatePdf()` → `Future.delayed(80ms)` → 폰트/이미지 fetch(인디케이터 돌아감) → `doc.addPage()` + `doc.save()` (동기 블로킹, 불가피) → `PdfPreview(build: (_) => Future.value(Uint8List.fromList(bytes)))`.
-- **`DataCloneError` (Web Worker ArrayBuffer detach)**: `PdfPreview`의 `build` 콜백은 재호출될 수 있음. Web Worker가 `ArrayBuffer`를 transfer하면 원본이 detach되므로 `Uint8List.fromList()`로 매번 새 복사본을 만들어야 함.
-- **웹 PDF 다운로드**: `PdfPreview`의 인쇄 버튼(브라우저 인쇄 다이얼로그) 사용. 공유 버튼(`allowSharing: !kIsWeb`)은 웹에서 숨김.
-- **ReorderableListView**: Flutter 3.44.2부터 `onReorderItem` 사용 — `newIndex` 수동 보정 불필요.
-- **`StyledText` 토큰 규칙 동기화**: `styled_text.dart`의 `_kToken` 정규식을 바꾸면 `portfolio_pdf_builder.dart`의 `_parseStyledSpans`도 같이 수정해야 함.
+| `tools/portfolio-upload/upload-project.mjs` | 개인 프로젝트 → Firestore/Storage 업로드 CLI |
+| `tools/portfolio-upload/example-project.json` | 업로드 JSON 스펙 예시 |
+| `tools/portfolio-upload/draft-coupley.json` | coupley 등록에 실제 사용한 스펙 (재수정 시 참고/재사용) |
+| `.claude/commands/portfolio-add.md` | `/portfolio-add` 슬래시커맨드 정의 |
+| `.secrets/service-account.json` | Firebase 서비스 계정 키 (git 미포함, 로컬 전용) |
+| `lib/data/models/project_model.dart` | `ProjectModel` 스키마 — 업로드 스크립트와 필드 반드시 동기화 |
+| `lib/data/repository/portfolio_repository.dart` | Firestore 경로(`portfolio/projects/items`) 정의 |
+| `lib/features/admin/widgets/login_dialog.dart` | 관리자 로그인 UI, `kDevAdminEmail`/`kDevAdminPassword` 사용(Debug 모드 전용) |
+| `lib/core/constants/dev_constants.dart` | 관리자 계정 정보 — **반드시 gitignore 상태 유지, 커밋 금지** |
