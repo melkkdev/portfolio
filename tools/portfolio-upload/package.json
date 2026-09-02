@@ -1,0 +1,14 @@
+{
+  "name": "portfolio-upload",
+  "private": true,
+  "type": "module",
+  "version": "1.0.0",
+  "description": "coupley 등 개인 프로젝트를 portfolio Firestore/Storage에 등록하는 CLI",
+  "scripts": {
+    "upload": "node upload-project.mjs"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.7.0",
+    "image-size": "^1.1.1"
+  }
+}

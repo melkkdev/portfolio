@@ -1,0 +1,27 @@
+{
+  "eyebrow": "Personal Project",
+  "title": "Coupley",
+  "summary": "연인이 일정을 함께 만들고 실시간으로 공유하는 **커플 캘린더 앱**입니다. 캘린더, 기념일, 디데이가 양쪽 화면에서 실시간 동기화됩니다.",
+  "id": "project_1788348737981",
+  "isLandscape": null,
+  "order": 6,
+  "rows": [
+    { "label": "소속 · 연계", "value": "개인 프로젝트" },
+    { "label": "업무 기간", "value": "2026.06 (2주)" },
+    { "label": "플랫폼", "value": "iOS / Android (Flutter)" },
+    { "label": "주요 기능", "value": "초대 코드 커플 연결, 개인/커플 일정 실시간 동기화, 오프라인 우선 캐싱, FCM 푸시 알림" },
+    { "label": "기술 스택", "value": "Flutter, Riverpod, go_router, Firebase(Firestore/Auth/FCM), Drift" },
+    { "label": "GitHub", "value": "melkkdev/coupley", "url": "https://github.com/melkkdev/coupley" }
+  ],
+  "stats": [],
+  "images": [
+    "C:/Users/tkdals/dev/app/coupley_dev/coupley/docs/screenshots/01_login.png",
+    "C:/Users/tkdals/dev/app/coupley_dev/coupley/docs/screenshots/07_couple_connect_start.png",
+    "C:/Users/tkdals/dev/app/coupley_dev/coupley/docs/screenshots/08_invite_code.png",
+    "C:/Users/tkdals/dev/app/coupley_dev/coupley/docs/screenshots/06_couple_connected.png",
+    "C:/Users/tkdals/dev/app/coupley_dev/coupley/docs/screenshots/02_calendar_home.png",
+    "C:/Users/tkdals/dev/app/coupley_dev/coupley/docs/screenshots/03_add_event_dialog.png",
+    "C:/Users/tkdals/dev/app/coupley_dev/coupley/docs/screenshots/04_event_added.png",
+    "C:/Users/tkdals/dev/app/coupley_dev/coupley/docs/screenshots/05_settings_dialog.png"
+  ]
+}

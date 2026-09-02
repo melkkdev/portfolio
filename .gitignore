@@ -44,3 +44,11 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Portfolio auto-upload tool
+.secrets/
+tools/portfolio-upload/node_modules/
+tools/portfolio-upload/*.log
+
+# 관리자 계정 정보 (절대 커밋 금지 — 과거 실수로 커밋된 이력이 있어 재발 방지)
+lib/core/constants/dev_constants.dart
+

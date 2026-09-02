@@ -1,0 +1,21 @@
+{
+  "eyebrow": "Personal Project",
+  "title": "Coupley",
+  "summary": "커플이 함께 쓰는 공유 캘린더 앱. **Flutter**로 개발했고 [GitHub](https://github.com/melkkdev/coupley)에 공개되어 있습니다.",
+  "isLandscape": null,
+  "order": null,
+  "rows": [
+    { "label": "소속 · 연계", "value": "개인 프로젝트" },
+    { "label": "업무 기간", "value": "2026.01 ~ 진행중" },
+    { "label": "플랫폼", "value": "iOS / Android (Flutter)" },
+    { "label": "주요 기능", "value": "커플 캘린더 공유, 일정 알림, D-Day 관리" },
+    { "label": "기술 스택", "value": "Flutter, Riverpod, Firebase" }
+  ],
+  "stats": [
+    { "value": "2", "label": "플랫폼" }
+  ],
+  "images": [
+    "C:/Users/tkdals/dev/app/coupley_dev/coupley/docs/screenshot_1.png",
+    "C:/Users/tkdals/dev/app/coupley_dev/coupley/docs/screenshot_2.png"
+  ]
+}
