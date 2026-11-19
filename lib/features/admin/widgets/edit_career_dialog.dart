@@ -247,7 +247,7 @@ class _CareerEditor extends StatelessWidget {
                     const Padding(
                       padding: EdgeInsets.only(right: 8, top: 2),
                       child: CircleAvatar(
-                          radius: 3, backgroundColor: AppColors.green),
+                          radius: 3, backgroundColor: AppColors.accent),
                     ),
                     Expanded(
                       child: MarkupTextField(

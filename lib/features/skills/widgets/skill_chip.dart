@@ -12,20 +12,20 @@ class SkillChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: isHighlight ? AppColors.greenLight : AppColors.lineSoft,
-        borderRadius: BorderRadius.circular(8),
+        color: isHighlight ? AppColors.accentSoft : AppColors.lineSoft,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
         border: Border.all(
           color: isHighlight
-              ? AppColors.green.withValues(alpha: 0.3)
+              ? AppColors.accent.withValues(alpha: 0.35)
               : AppColors.line,
         ),
       ),
       child: Text(
         label,
-        style: TextStyle(
-          fontSize: 13,
+        style: AppTheme.mono(
+          fontSize: 12,
           fontWeight: isHighlight ? FontWeight.w700 : FontWeight.w500,
-          color: isHighlight ? AppColors.greenDeep : AppColors.inkSoft,
+          color: isHighlight ? AppColors.accentDeep : AppColors.inkSoft,
         ),
       ),
     );

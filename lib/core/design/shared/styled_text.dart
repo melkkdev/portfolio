@@ -5,7 +5,7 @@ import '../../theme/app_theme.dart';
 
 /// 인라인 마크업 렌더러
 ///   **text**  → 굵게 (inkSoft 색상 유지)
-///   [[text]]  → 초록 + 굵게 (AppColors.green)
+///   [[text]]  → 초록 + 굵게 (AppColors.accent)
 ///   github.com/... 또는 https://github.com/... → 클릭 가능한 링크
 class StyledText extends StatelessWidget {
   final String text;
@@ -38,7 +38,7 @@ class StyledText extends StatelessWidget {
           text: url,
           style: baseStyle.copyWith(
             fontWeight: FontWeight.w700,
-            color: AppColors.green,
+            color: AppColors.accent,
             decoration: TextDecoration.underline,
           ),
           mouseCursor: SystemMouseCursors.click,
@@ -58,7 +58,7 @@ class StyledText extends StatelessWidget {
             ? baseStyle.copyWith(fontWeight: FontWeight.w700)
             : baseStyle.copyWith(
                 fontWeight: FontWeight.w700,
-                color: AppColors.green,
+                color: AppColors.accent,
               ),
       ));
       cursor = m.end;

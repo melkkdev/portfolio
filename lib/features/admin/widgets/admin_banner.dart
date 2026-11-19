@@ -15,7 +15,7 @@ class AdminBanner extends ConsumerWidget {
 
     return Container(
       width: double.infinity,
-      color: AppColors.green,
+      color: AppColors.accent,
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,

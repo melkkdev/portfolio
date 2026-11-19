@@ -81,7 +81,7 @@ class _ImageViewerDialogState extends State<_ImageViewerDialog> {
           children: [
             Container(
               decoration: BoxDecoration(
-                color: AppColors.green,
+                color: AppColors.accent,
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(ModalStyles.radius),
                   topRight: Radius.circular(ModalStyles.radius),

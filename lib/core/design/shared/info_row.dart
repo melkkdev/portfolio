@@ -35,7 +35,7 @@ class InfoRow extends StatelessWidget {
                   label,
                   style: const TextStyle(
                     fontSize: 13,
-                    color: AppColors.green,
+                    color: AppColors.accent,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -58,7 +58,7 @@ class InfoRow extends StatelessWidget {
                               text: value,
                               baseStyle: const TextStyle(
                                 fontSize: 13,
-                                color: AppColors.green,
+                                color: AppColors.accent,
                                 fontWeight: FontWeight.w600,
                                 height: 1.6,
                               ),

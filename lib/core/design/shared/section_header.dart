@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 
+/// "01" 코랄 알약 + 둥근 제목
 class SectionHeader extends StatelessWidget {
   final String num;
   final String title;
@@ -9,28 +10,27 @@ class SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.baseline,
-      textBaseline: TextBaseline.alphabetic,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          num,
-          style: AppTheme.mono(
-            fontSize: 13,
-            color: AppColors.green,
-            fontWeight: FontWeight.w500,
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+          decoration: BoxDecoration(
+            color: AppColors.accentSoft,
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+          ),
+          child: Text(
+            num,
+            style: AppTheme.mono(
+              fontSize: 11,
+              color: AppColors.accentDeep,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
-        const SizedBox(width: 14),
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 26,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -0.26,
-            color: AppColors.ink,
-          ),
-        ),
+        const SizedBox(height: 10),
+        Text(title, style: AppTheme.display(fontSize: 36)),
       ],
     );
   }

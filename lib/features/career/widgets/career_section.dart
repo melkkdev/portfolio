@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/common/spacing.dart';
+import '../../../core/design/shared/reveal.dart';
+import '../../../core/design/shared/section_band.dart';
 import '../../../core/design/shared/section_header.dart';
-import '../../../core/theme/app_theme.dart';
 import '../../../data/portfolio_provider.dart';
 import '../../admin/admin_provider.dart';
 import '../../admin/widgets/edit_career_dialog.dart';
@@ -16,36 +17,38 @@ class CareerSection extends ConsumerWidget {
     final careers = ref.watch(portfolioProvider).requireValue.careers;
     final isAdmin = ref.watch(adminProvider.select((s) => s.isAdmin));
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            const Expanded(child: SectionHeader(num: '03', title: '경력')),
-            if (isAdmin)
-              TextButton.icon(
-                onPressed: () => EditCareerDialog.show(
-                  context,
-                  careers: careers,
-                  onSaved: ref.read(portfolioProvider.notifier).reload,
-                ),
-                icon: const Icon(Icons.edit_rounded,
-                    size: 16, color: AppColors.green),
-                label: const Text(
-                  '경력 편집',
-                  style: TextStyle(color: AppColors.green, fontSize: 13),
-                ),
-              ),
-          ],
-        ),
-        const SizedBox(height: Spacing.lg),
-        ...careers.map(
-          (c) => Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: CareerCard(career: c),
+    return SectionBand(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Reveal(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                const Expanded(child: SectionHeader(num: '03', title: '경력')),
+                if (isAdmin)
+                  AdminTextButton(
+                    label: '경력 편집',
+                    onPressed: () => EditCareerDialog.show(
+                      context,
+                      careers: careers,
+                      onSaved: ref.read(portfolioProvider.notifier).reload,
+                    ),
+                  ),
+              ],
+            ),
           ),
-        ),
-      ],
+          const SizedBox(height: Spacing.xl),
+          for (final (i, c) in careers.indexed)
+            Reveal(
+              child: CareerTimelineItem(
+                career: c,
+                isFirst: i == 0,
+                isLast: i == careers.length - 1,
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

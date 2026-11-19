@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/models/project_model.dart';
 
+/// 프로젝트 카드 안의 숫자 타일 (Firestore 프로젝트 stats 값)
 class StatItem extends StatelessWidget {
   final StatModel data;
 
@@ -10,29 +11,31 @@ class StatItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isLong = data.value.length > 8;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          data.value,
-          style: TextStyle(
-            fontSize: isLong ? 15 : 22,
-            fontWeight: FontWeight.w800,
-            color: AppColors.ink,
-            letterSpacing: -0.5,
-            height: 1.3,
+    return Container(
+      constraints: const BoxConstraints(minWidth: 84),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.peach,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            data.value,
+            style: AppTheme.display(
+              fontSize: isLong ? 16 : 24,
+              color: AppColors.ink,
+              height: 1.2,
+            ),
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          data.label,
-          style: const TextStyle(
-            fontSize: 12,
-            color: AppColors.muted,
-            height: 1.5,
+          const SizedBox(height: 2),
+          Text(
+            data.label,
+            style: const TextStyle(fontSize: 12, color: AppColors.muted),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
