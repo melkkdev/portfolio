@@ -19,6 +19,7 @@ class _PdfBuildParams {
   final PortfolioState state;
   final ByteData regularFontData;
   final ByteData boldFontData;
+  final ByteData displayFontData;
   final Map<String, Uint8List> images;
   final double pageWidth;
   final double pageHeight;
@@ -27,6 +28,7 @@ class _PdfBuildParams {
     required this.state,
     required this.regularFontData,
     required this.boldFontData,
+    required this.displayFontData,
     required this.images,
     required this.pageWidth,
     required this.pageHeight,
@@ -34,11 +36,15 @@ class _PdfBuildParams {
 }
 
 class PortfolioPdfBuilder {
-  static const _green = PdfColor.fromInt(0xFF006E51);
-  static const _ink = PdfColor.fromInt(0xFF232826);
-  static const _inkSoft = PdfColor.fromInt(0xFF3A423D);
-  static const _muted = PdfColor.fromInt(0xFF6B746E);
-  static const _line = PdfColor.fromInt(0xFFE3E7E3);
+  // app_theme.dart AppColors와 같은 팔레트 (2026-11 코랄 리디자인)
+  static const _accent = PdfColor.fromInt(0xFFE8664B);
+  static const _accentDeep = PdfColor.fromInt(0xFFC94F36);
+  static const _accentSoft = PdfColor.fromInt(0xFFFCE3DA);
+  static const _ink = PdfColor.fromInt(0xFF2B211C);
+  static const _inkSoft = PdfColor.fromInt(0xFF4F433C);
+  static const _muted = PdfColor.fromInt(0xFF8C7E74);
+  static const _line = PdfColor.fromInt(0xFFF1E4D6);
+  static const _lineSoft = PdfColor.fromInt(0xFFF7EEE4);
 
   // ─────────────────────────────────────────────────────────────────────────
   // ① 메인 스레드: 비동기 I/O (폰트 다운로드 + 이미지 fetch)
@@ -52,6 +58,8 @@ class PortfolioPdfBuilder {
     // PdfGoogleFonts는 내부적으로 캐시를 사용하므로 두 번째 호출부터는 빠름.
     final regularFont = await PdfGoogleFonts.notoSansKRRegular();
     final boldFont = await PdfGoogleFonts.notoSansKRBold();
+    // 제목용 둥근 폰트 (웹 화면의 AppTheme.display와 동일)
+    final displayFont = await PdfGoogleFonts.juaRegular();
 
     final imageUrls = <String>{
       for (final p in state.projects) ...p.imageUrls,
@@ -69,11 +77,14 @@ class PortfolioPdfBuilder {
     //          (BuiltinFont)를 반환 → TtfFont.data가 없으므로 Isolate 불가.
     //          메인 스레드에서 직접 빌드한다.
     // ─────────────────────────────────────────────────────────────────────
-    if (regularFont is pw.TtfFont && boldFont is pw.TtfFont) {
+    if (regularFont is pw.TtfFont &&
+        boldFont is pw.TtfFont &&
+        displayFont is pw.TtfFont) {
       return _buildPdf(_PdfBuildParams(
         state: state,
         regularFontData: regularFont.data,
         boldFontData: boldFont.data,
+        displayFontData: displayFont.data,
         images: images,
         pageWidth: effectiveFormat.width,
         pageHeight: effectiveFormat.height,
@@ -81,12 +92,14 @@ class PortfolioPdfBuilder {
     }
 
     // 폴백: 메인 스레드에서 직접 빌드 (테스트 환경 등)
-    return _buildPdfOnMainThread(regularFont, boldFont, state, images, effectiveFormat);
+    return _buildPdfOnMainThread(
+        regularFont, boldFont, displayFont, state, images, effectiveFormat);
   }
 
   static Future<Uint8List> _buildPdfOnMainThread(
     pw.Font regular,
     pw.Font bold,
+    pw.Font display,
     PortfolioState state,
     Map<String, Uint8List> images,
     PdfPageFormat format,
@@ -98,7 +111,7 @@ class PortfolioPdfBuilder {
       maxPages: 200,
       pageFormat: format,
       margin: const pw.EdgeInsets.fromLTRB(36, 40, 36, 40),
-      build: (_) => _buildContent(state, images),
+      build: (_) => _buildContent(state, images, display),
     ));
     return doc.save();
   }
@@ -125,6 +138,7 @@ class PortfolioPdfBuilder {
   static Future<Uint8List> _buildPdf(_PdfBuildParams p) async {
     final regular = pw.TtfFont(p.regularFontData);
     final bold = pw.TtfFont(p.boldFontData);
+    final display = pw.TtfFont(p.displayFontData);
     final doc = pw.Document(
       theme: pw.ThemeData.withFont(base: regular, bold: bold),
     );
@@ -132,7 +146,7 @@ class PortfolioPdfBuilder {
       maxPages: 200,
       pageFormat: PdfPageFormat(p.pageWidth, p.pageHeight),
       margin: const pw.EdgeInsets.fromLTRB(36, 40, 36, 40),
-      build: (_) => _buildContent(p.state, p.images),
+      build: (_) => _buildContent(p.state, p.images, display),
     ));
     return doc.save();
   }
@@ -141,34 +155,35 @@ class PortfolioPdfBuilder {
   static List<pw.Widget> _buildContent(
     PortfolioState state,
     Map<String, Uint8List> images,
+    pw.Font display,
   ) =>
       [
-        _buildProfile(state.profile),
+        _buildProfile(state.profile, display),
         if (state.intro.isNotEmpty) ...[
           pw.SizedBox(height: 28),
-          _sectionTitle('소개'),
+          _sectionTitle('소개', display),
           pw.SizedBox(height: 10),
           ..._buildIntro(state.intro),
         ],
         if (state.skills.isNotEmpty) ...[
           pw.SizedBox(height: 28),
-          _sectionTitle('기술 스택'),
+          _sectionTitle('기술 스택', display),
           pw.SizedBox(height: 10),
           ..._buildSkills(state.skills),
         ],
         if (state.careers.isNotEmpty) ...[
           pw.SizedBox(height: 28),
-          _sectionTitle('경력'),
+          _sectionTitle('경력', display),
           pw.SizedBox(height: 10),
           ..._buildCareers(state.careers),
         ],
         if (state.projects.isNotEmpty) ...[
           pw.SizedBox(height: 28),
-          _sectionTitle('대표 프로젝트'),
+          _sectionTitle('대표 프로젝트', display),
           pw.SizedBox(height: 14),
           for (int i = 0; i < state.projects.length; i++) ...[
             if (i > 0) pw.NewPage(),
-            ..._buildProject(state.projects[i], images),
+            ..._buildProject(state.projects[i], images, display),
             pw.SizedBox(height: 18),
           ],
         ],
@@ -176,18 +191,14 @@ class PortfolioPdfBuilder {
 
   // ── PDF 위젯 빌더 (아래부터는 메인/Isolate 양쪽에서 호출 가능한 순수 함수) ──
 
-  static pw.Widget _sectionTitle(String title) {
+  static pw.Widget _sectionTitle(String title, pw.Font display) {
     return pw.Text(
       title,
-      style: pw.TextStyle(
-        fontSize: 16,
-        fontWeight: pw.FontWeight.bold,
-        color: _green,
-      ),
+      style: pw.TextStyle(font: display, fontSize: 17, color: _accent),
     );
   }
 
-  static pw.Widget _buildProfile(ProfileModel profile) {
+  static pw.Widget _buildProfile(ProfileModel profile, pw.Font display) {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
@@ -202,20 +213,12 @@ class PortfolioPdfBuilder {
         pw.SizedBox(height: 8),
         pw.Text(
           profile.name,
-          style: pw.TextStyle(
-            fontSize: 26,
-            fontWeight: pw.FontWeight.bold,
-            color: _green,
-          ),
+          style: pw.TextStyle(font: display, fontSize: 28, color: _ink),
         ),
         pw.SizedBox(height: 6),
         pw.Text(
           profile.tagline,
-          style: pw.TextStyle(
-            fontSize: 16,
-            fontWeight: pw.FontWeight.bold,
-            color: _ink,
-          ),
+          style: pw.TextStyle(font: display, fontSize: 16, color: _accent),
         ),
         pw.SizedBox(height: 10),
         pw.Row(
@@ -231,7 +234,7 @@ class PortfolioPdfBuilder {
                 profile.githubDisplayUrl,
                 style: pw.TextStyle(
                   fontSize: 10,
-                  color: _green,
+                  color: _accentDeep,
                   fontWeight: pw.FontWeight.bold,
                 ),
               ),
@@ -293,15 +296,18 @@ class PortfolioPdfBuilder {
     return pw.Container(
       padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: pw.BoxDecoration(
-        color: highlight ? _green : PdfColors.white,
-        border: highlight ? null : pw.Border.all(color: _line),
-        borderRadius: pw.BorderRadius.circular(4),
+        color: highlight ? _accentSoft : _lineSoft,
+        border: pw.Border.all(color: highlight ? _accentSoft : _line),
+        // pdf 패키지는 반경을 박스 크기로 줄여 주지 않아 999 같은 값을 쓰면
+        // 페이지를 덮는 큰 도형이 그려진다. 칩 높이(약 19pt)의 절반으로 지정.
+        borderRadius: pw.BorderRadius.circular(9),
       ),
       child: pw.Text(
         label,
         style: pw.TextStyle(
           fontSize: 9,
-          color: highlight ? PdfColors.white : _inkSoft,
+          color: highlight ? _accentDeep : _inkSoft,
+          fontWeight: highlight ? pw.FontWeight.bold : null,
         ),
       ),
     );
@@ -361,7 +367,7 @@ class PortfolioPdfBuilder {
                   width: 4,
                   height: 4,
                   decoration: const pw.BoxDecoration(
-                    color: _green,
+                    color: _accent,
                     shape: pw.BoxShape.circle,
                   ),
                 ),
@@ -394,6 +400,7 @@ class PortfolioPdfBuilder {
   static List<pw.Widget> _buildProject(
     ProjectModel project,
     Map<String, Uint8List> images,
+    pw.Font display,
   ) {
     final availableImages =
         project.imageUrls.where(images.containsKey).toList();
@@ -414,11 +421,7 @@ class PortfolioPdfBuilder {
             pw.SizedBox(height: 4),
             pw.Text(
               project.title,
-              style: pw.TextStyle(
-                fontSize: 15,
-                fontWeight: pw.FontWeight.bold,
-                color: _green,
-              ),
+              style: pw.TextStyle(font: display, fontSize: 16, color: _ink),
             ),
             if (project.summary.isNotEmpty) ...[
               pw.SizedBox(height: 6),
@@ -483,7 +486,7 @@ class PortfolioPdfBuilder {
                     r.label,
                     style: pw.TextStyle(
                       fontSize: 9.5,
-                      color: _green,
+                      color: _accentDeep,
                       fontWeight: pw.FontWeight.bold,
                     ),
                   ),
@@ -542,7 +545,7 @@ class PortfolioPdfBuilder {
     return widgets;
   }
 
-  // **text** → 굵게, [[text]] → 초록+굵게, github.com/... → 클릭 가능한 링크.
+  // **text** → 굵게, [[text]] → 코랄+굵게, github.com/... → 클릭 가능한 링크.
   // styled_text.dart의 토큰 규칙을 PDF RichText로 동일하게 재현한다.
   static final _kToken = RegExp(
     r'\*\*(.+?)\*\*|\[\[(.+?)\]\]|(?<url>(?:https?://)?(?:www\.)?github\.com/[^\s,)\]]+)',
@@ -564,7 +567,7 @@ class PortfolioPdfBuilder {
         final fullUrl = url.startsWith('http') ? url : 'https://$url';
         spans.add(pw.TextSpan(
           text: url,
-          style: base.copyWith(color: _green, fontWeight: pw.FontWeight.bold),
+          style: base.copyWith(color: _accentDeep, fontWeight: pw.FontWeight.bold),
           annotation: pw.AnnotationUrl(fullUrl),
         ));
         cursor = m.end;
@@ -577,7 +580,7 @@ class PortfolioPdfBuilder {
         text: raw,
         style: isBold
             ? base.copyWith(fontWeight: pw.FontWeight.bold)
-            : base.copyWith(fontWeight: pw.FontWeight.bold, color: _green),
+            : base.copyWith(fontWeight: pw.FontWeight.bold, color: _accent),
       ));
       cursor = m.end;
     }
