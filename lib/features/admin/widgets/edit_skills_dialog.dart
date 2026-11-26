@@ -298,7 +298,7 @@ class _EditSkillsDialogState extends State<EditSkillsDialog> {
             const SizedBox(width: 10),
             const _LegendDot(color: Color(0xFFD6E4DA), label: '일반'),
             const SizedBox(width: 10),
-            const _LegendDot(color: AppColors.greenLight, label: '강조'),
+            const _LegendDot(color: AppColors.accentSoft, label: '강조'),
             const Spacer(),
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
@@ -349,7 +349,7 @@ class _GroupTabBar extends StatelessWidget {
             return Padding(
               padding: const EdgeInsets.only(right: 6),
               child: Material(
-                color: isSelected ? AppColors.green : AppColors.lineSoft,
+                color: isSelected ? AppColors.accent : AppColors.lineSoft,
                 borderRadius: BorderRadius.circular(8),
                 child: InkWell(
                   onTap: () => onSelect(e.key),
@@ -431,14 +431,14 @@ class _SkillToggleChip extends StatelessWidget {
         ),
       _SkillState.normal => (
           const Color(0xFFD6E4DA),
-          AppColors.green.withValues(alpha: 0.2),
-          AppColors.greenDeep,
+          AppColors.accent.withValues(alpha: 0.2),
+          AppColors.accentDeep,
           FontWeight.w600,
         ),
       _SkillState.highlight => (
-          AppColors.greenLight,
-          AppColors.green.withValues(alpha: 0.4),
-          AppColors.greenDeep,
+          AppColors.accentSoft,
+          AppColors.accent.withValues(alpha: 0.4),
+          AppColors.accentDeep,
           FontWeight.w700,
         ),
     };
@@ -458,7 +458,7 @@ class _SkillToggleChip extends StatelessWidget {
           children: [
             if (state == _SkillState.highlight) ...[
               const Icon(Icons.star_rounded,
-                  size: 12, color: AppColors.greenDeep),
+                  size: 12, color: AppColors.accentDeep),
               const SizedBox(width: 4),
             ],
             Text(

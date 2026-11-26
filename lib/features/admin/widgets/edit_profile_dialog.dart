@@ -264,7 +264,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
-                color: AppColors.green,
+                color: AppColors.accent,
               ),
             ),
             const SizedBox(width: 8),

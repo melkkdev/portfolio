@@ -32,7 +32,7 @@ class _AdminFabState extends ConsumerState<AdminFab> {
                   if (mounted) setState(() => _exiting = false);
                 }
               },
-        backgroundColor: _exiting ? AppColors.inkSoft : AppColors.green,
+        backgroundColor: _exiting ? AppColors.inkSoft : AppColors.accent,
         icon: _exiting
             ? const SizedBox(
                 width: 18,

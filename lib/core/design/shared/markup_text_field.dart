@@ -81,7 +81,7 @@ class _MarkupTextFieldState extends State<MarkupTextField> {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.green,
+                    color: AppColors.accent,
                   ),
                 ),
               ),
@@ -106,7 +106,7 @@ class _MarkupTextFieldState extends State<MarkupTextField> {
             focusedBorder: OutlineInputBorder(
               borderRadius:
                   const BorderRadius.vertical(bottom: Radius.circular(8)),
-              borderSide: BorderSide(color: AppColors.green, width: 1.5),
+              borderSide: BorderSide(color: AppColors.accent, width: 1.5),
             ),
           ),
         ),

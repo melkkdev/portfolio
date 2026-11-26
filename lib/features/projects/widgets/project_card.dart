@@ -27,45 +27,55 @@ class ProjectCard extends ConsumerWidget {
       children: [
         SurfaceCard(
           padding: EdgeInsets.zero,
+          radius: AppRadius.xl,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── 그린 배너 헤더 ──────────────────────────────────
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
-                decoration: const BoxDecoration(
-                  color: AppColors.green,
-                ),
+              // ── 헤더 ─────────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(32, 32, 32, 0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      project.eyebrow,
-                      style: AppTheme.mono(
-                        fontSize: 11,
-                        color: Colors.white.withValues(alpha: 0.75),
+                    if (project.eyebrow.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.accentSoft,
+                          borderRadius:
+                              BorderRadius.circular(AppRadius.pill),
+                        ),
+                        child: Text(
+                          project.eyebrow,
+                          style: AppTheme.mono(
+                            fontSize: 11,
+                            color: AppColors.accentDeep,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      project.title,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                        height: 1.2,
-                      ),
-                    ),
+                    const SizedBox(height: 12),
+                    Text(project.title, style: AppTheme.display(fontSize: 34)),
                     if (project.summary.isNotEmpty) ...[
                       const SizedBox(height: 10),
                       Text(
                         project.summary,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.white.withValues(alpha: 0.85),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: AppColors.inkSoft,
                           height: 1.7,
                         ),
+                      ),
+                    ],
+                    if (project.stats.isNotEmpty) ...[
+                      const SizedBox(height: 20),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: project.stats
+                            .map((s) => StatItem(data: s))
+                            .toList(),
                       ),
                     ],
                   ],
@@ -74,15 +84,20 @@ class ProjectCard extends ConsumerWidget {
 
               // ── 갤러리 ───────────────────────────────────────────
               if (project.imageUrls.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+                Container(
+                  margin: const EdgeInsets.fromLTRB(20, 28, 20, 0),
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  decoration: BoxDecoration(
+                    color: AppColors.band,
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                  ),
                   child: Stack(
                     children: [
                       project.isLandscape
                           ? LandscapeGallery(imageUrls: project.imageUrls)
                           : PortraitGallery(imageUrls: project.imageUrls),
                       Positioned(
-                        right: 0,
+                        right: 12,
                         bottom: 0,
                         child: _ExpandButton(
                           onTap: () => showImageViewer(
@@ -99,7 +114,7 @@ class ProjectCard extends ConsumerWidget {
 
               // ── 상세 정보 ─────────────────────────────────────────
               Padding(
-                padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
+                padding: const EdgeInsets.fromLTRB(32, 16, 32, 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -113,33 +128,19 @@ class ProjectCard extends ConsumerWidget {
                   ],
                 ),
               ),
-
-              // ── 통계 ─────────────────────────────────────────────
-              if (project.stats.isNotEmpty) ...[
-                const Divider(color: AppColors.line, height: 1),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
-                  child: Wrap(
-                    spacing: 32,
-                    runSpacing: 16,
-                    children:
-                        project.stats.map((s) => StatItem(data: s)).toList(),
-                  ),
-                ),
-              ],
             ],
           ),
         ),
         if (isAdmin)
           Positioned(
-            top: 8,
-            right: 8,
+            top: 16,
+            right: 16,
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 _ActionButton(
                   icon: Icons.edit_rounded,
-                  color: AppColors.greenDeep,
+                  color: AppColors.accentDeep,
                   label: '편집',
                   onTap: () => EditProjectDialog.show(
                     context,

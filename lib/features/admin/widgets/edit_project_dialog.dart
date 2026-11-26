@@ -302,10 +302,10 @@ class _EditProjectDialogState extends State<EditProjectDialog> {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 10, vertical: 6),
                               decoration: BoxDecoration(
-                                color: AppColors.green.withAlpha(20),
+                                color: AppColors.accent.withAlpha(20),
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                    color: AppColors.green.withAlpha(80)),
+                                    color: AppColors.accent.withAlpha(80)),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
@@ -315,7 +315,7 @@ class _EditProjectDialogState extends State<EditProjectDialog> {
                                         ? Icons.monitor_rounded
                                         : Icons.smartphone_rounded,
                                     size: 15,
-                                    color: AppColors.green,
+                                    color: AppColors.accent,
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
@@ -324,7 +324,7 @@ class _EditProjectDialogState extends State<EditProjectDialog> {
                                         : '세로형 — 스마트폰',
                                     style: const TextStyle(
                                       fontSize: 12,
-                                      color: AppColors.green,
+                                      color: AppColors.accent,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -348,9 +348,9 @@ class _EditProjectDialogState extends State<EditProjectDialog> {
                     TextButton.icon(
                       onPressed: _pickFiles,
                       icon: const Icon(Icons.add_photo_alternate_rounded,
-                          size: 18, color: AppColors.green),
+                          size: 18, color: AppColors.accent),
                       label: const Text('파일 추가',
-                          style: TextStyle(color: AppColors.green)),
+                          style: TextStyle(color: AppColors.accent)),
                     ),
                     _sectionHeader('상세 정보 행'),
                     const Text(
@@ -366,9 +366,9 @@ class _EditProjectDialogState extends State<EditProjectDialog> {
                       onPressed: () =>
                           setState(() => _rows.add(_RowEntry('', '', ''))),
                       icon: const Icon(Icons.add,
-                          size: 18, color: AppColors.green),
+                          size: 18, color: AppColors.accent),
                       label: const Text('행 추가',
-                          style: TextStyle(color: AppColors.green)),
+                          style: TextStyle(color: AppColors.accent)),
                     ),
                     _sectionHeader('통계'),
                     ..._stats.asMap().entries.map(
@@ -378,9 +378,9 @@ class _EditProjectDialogState extends State<EditProjectDialog> {
                       onPressed: () =>
                           setState(() => _stats.add(_StatEntry('', ''))),
                       icon: const Icon(Icons.add,
-                          size: 18, color: AppColors.green),
+                          size: 18, color: AppColors.accent),
                       label: const Text('통계 추가',
-                          style: TextStyle(color: AppColors.green)),
+                          style: TextStyle(color: AppColors.accent)),
                     ),
                   ],
                 ),
@@ -481,7 +481,7 @@ class _EditProjectDialogState extends State<EditProjectDialog> {
         borderRadius: BorderRadius.circular(8),
         side: BorderSide(
           color: entry.isFixed
-              ? AppColors.green.withAlpha(80)
+              ? AppColors.accent.withAlpha(80)
               : AppColors.line,
         ),
       ),
@@ -494,7 +494,7 @@ class _EditProjectDialogState extends State<EditProjectDialog> {
               children: [
                 if (entry.isFixed)
                   const Icon(Icons.lock_rounded,
-                      size: 12, color: AppColors.green)
+                      size: 12, color: AppColors.accent)
                 else
                   Text(
                     '행 ${idx + 1}',
@@ -525,7 +525,7 @@ class _EditProjectDialogState extends State<EditProjectDialog> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppColors.green.withAlpha(20),
+                  color: AppColors.accent.withAlpha(20),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -533,7 +533,7 @@ class _EditProjectDialogState extends State<EditProjectDialog> {
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.green,
+                    color: AppColors.accent,
                   ),
                 ),
               )
@@ -622,7 +622,7 @@ class _EditProjectDialogState extends State<EditProjectDialog> {
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
-                color: AppColors.green,
+                color: AppColors.accent,
               ),
             ),
             const SizedBox(width: 8),

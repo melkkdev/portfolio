@@ -3,6 +3,11 @@
 //
 // 사용법:
 //   node upload-project.mjs <project.json> [--dry-run]
+//   node upload-project.mjs <project.json> --images-only [--dry-run]
+//
+// --images-only: spec.id의 기존 문서에서 이미지만 교체한다. 다른 필드(설명·순서 등)는
+//   건드리지 않고, 새 이미지는 {id}_{타임스탬프}_{번호} 이름으로 올려 다른 프로젝트 파일과
+//   겹치지 않게 한다. 이전 이미지 파일은 Storage에 그대로 남긴다.
 //
 // project.json 형식은 tools/portfolio-upload/example-project.json 참고.
 // project_model.dart의 ProjectModel.toMap() / firestore 경로와 반드시 일치시킬 것.
@@ -34,9 +39,10 @@ function fail(msg) {
 function parseArgs() {
   const args = process.argv.slice(2);
   const dryRun = args.includes("--dry-run");
+  const imagesOnly = args.includes("--images-only");
   const jsonPath = args.find((a) => !a.startsWith("--"));
-  if (!jsonPath) fail("사용법: node upload-project.mjs <project.json> [--dry-run]");
-  return { jsonPath: resolve(jsonPath), dryRun };
+  if (!jsonPath) fail("사용법: node upload-project.mjs <project.json> [--images-only] [--dry-run]");
+  return { jsonPath: resolve(jsonPath), dryRun, imagesOnly };
 }
 
 function loadServiceAccount() {
@@ -78,7 +84,7 @@ function contentTypeFor(filename) {
 }
 
 async function main() {
-  const { jsonPath, dryRun } = parseArgs();
+  const { jsonPath, dryRun, imagesOnly } = parseArgs();
   const spec = loadSpec(jsonPath);
 
   for (const imgPath of spec.images) {
@@ -94,6 +100,11 @@ async function main() {
   const db = admin.firestore();
   const bucket = admin.storage().bucket();
   const itemsCol = db.collection("portfolio").doc("projects").collection("items");
+
+  if (imagesOnly) {
+    await replaceImagesOnly({ spec, itemsCol, bucket, dryRun });
+    return;
+  }
 
   // order / id 결정
   let order = spec.order;
@@ -159,6 +170,46 @@ async function main() {
   await itemsCol.doc(id).set(doc);
   console.log(`\nFirestore 저장 완료: portfolio/projects/items/${id}`);
   console.log(`https://melkk-dev.web.app 에서 확인하세요 (배포된 도메인이 다르면 그쪽으로 확인).\n`);
+}
+
+async function replaceImagesOnly({ spec, itemsCol, bucket, dryRun }) {
+  if (!spec.id) fail(`--images-only에는 기존 문서의 "id"가 필요합니다.`);
+  const ref = itemsCol.doc(spec.id);
+  const snap = await ref.get();
+  if (!snap.exists) fail(`기존 문서를 찾을 수 없습니다: portfolio/projects/items/${spec.id}`);
+  const current = snap.data();
+
+  const stamp = new Date().toISOString().slice(0, 10).replaceAll("-", "");
+  const imageFilenames = spec.images.map((imgPath, i) => {
+    const ext = extname(imgPath) || ".jpg";
+    return `${spec.id}_${stamp}_${String(i + 1).padStart(2, "0")}${ext}`;
+  });
+
+  console.log(`\n=== 이미지 교체 계획 (--images-only) ===`);
+  console.log(`문서        : portfolio/projects/items/${spec.id}`);
+  console.log(`현재 제목   : ${current.title} (order=${current.order})`);
+  console.log(`기존 이미지 : ${(current.imageFilenames ?? []).length}장 → ${(current.imageFilenames ?? []).join(", ")}`);
+  console.log(`새 이미지   : ${spec.images.length}장`);
+  spec.images.forEach((src, i) => console.log(`  - ${basename(src)} → ${imageFilenames[i]}`));
+  console.log(`다른 필드(제목·설명·행·통계·순서·방향)는 바꾸지 않습니다.`);
+
+  if (dryRun) {
+    console.log(`\n--dry-run 이므로 실제 업로드는 하지 않았습니다.\n`);
+    return;
+  }
+
+  for (let i = 0; i < spec.images.length; i++) {
+    const destName = imageFilenames[i];
+    process.stdout.write(`업로드 중 (${i + 1}/${spec.images.length}): ${destName} ... `);
+    await bucket.upload(resolve(spec.images[i]), {
+      destination: `images/${destName}`,
+      metadata: { contentType: contentTypeFor(destName) },
+    });
+    console.log("완료");
+  }
+
+  await ref.update({ imageFilenames });
+  console.log(`\nimageFilenames 교체 완료: portfolio/projects/items/${spec.id}\n`);
 }
 
 main().catch((e) => fail(e.stack ?? e.message));

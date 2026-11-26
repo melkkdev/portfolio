@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/common/spacing.dart';
+import '../../../core/design/shared/reveal.dart';
+import '../../../core/design/shared/section_band.dart';
 import '../../../core/design/shared/section_header.dart';
-import '../../../core/theme/app_theme.dart';
 import '../../../data/portfolio_provider.dart';
 import '../../admin/admin_provider.dart';
 import '../../admin/widgets/edit_project_dialog.dart';
@@ -29,37 +30,41 @@ class ProjectsSection extends ConsumerWidget {
           ]
         : firestoreProjects;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            const Expanded(
-                child: SectionHeader(num: '04', title: '대표 프로젝트')),
-            if (isAdmin)
-              TextButton.icon(
-                onPressed: () => EditProjectDialog.show(
-                  context,
-                  allProjects: firestoreProjects,
-                  onSaved: ref.read(portfolioProvider.notifier).reload,
-                ),
-                icon: const Icon(Icons.add_rounded,
-                    size: 16, color: AppColors.green),
-                label: const Text(
-                  '프로젝트 추가',
-                  style: TextStyle(color: AppColors.green, fontSize: 13),
-                ),
-              ),
-          ],
-        ),
-        const SizedBox(height: Spacing.lg),
-        ...displayProjects.map(
-          (p) => Padding(
-            padding: const EdgeInsets.only(bottom: 20),
-            child: ProjectCard(project: p),
+    return SectionBand(
+      tinted: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Reveal(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                const Expanded(
+                    child: SectionHeader(num: '04', title: '프로젝트')),
+                if (isAdmin)
+                  AdminTextButton(
+                    label: '프로젝트 추가',
+                    icon: Icons.add_rounded,
+                    onPressed: () => EditProjectDialog.show(
+                      context,
+                      allProjects: firestoreProjects,
+                      onSaved: ref.read(portfolioProvider.notifier).reload,
+                    ),
+                  ),
+              ],
+            ),
           ),
-        ),
-      ],
+          const SizedBox(height: Spacing.xl),
+          for (final p in displayProjects)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 32),
+              child: Reveal(
+                key: ValueKey(p.id),
+                child: ProjectCard(project: p),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
