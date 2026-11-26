@@ -3,9 +3,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/constants/dev_constants.dart';
 import '../admin_provider.dart';
 import '../admin_service.dart';
+
+// Debug 자동 로그인용 계정. 로컬에서는 --dart-define-from-file=.secrets/dart_defines.json 으로 주입.
+const _kDevAdminEmail = String.fromEnvironment('DEV_ADMIN_EMAIL');
+const _kDevAdminPassword = String.fromEnvironment('DEV_ADMIN_PASSWORD');
 
 class LoginDialog extends ConsumerStatefulWidget {
   const LoginDialog({super.key});
@@ -91,12 +94,12 @@ class _LoginDialogState extends ConsumerState<LoginDialog> {
         ),
       ),
       actions: [
-        if (kDebugMode)
+        if (kDebugMode && _kDevAdminEmail.isNotEmpty)
           TextButton(
             onPressed: () async {
               setState(() => _loading = true);
               try {
-                await AdminService.signIn(kDevAdminEmail, kDevAdminPassword);
+                await AdminService.signIn(_kDevAdminEmail, _kDevAdminPassword);
                 if (context.mounted) {
                   ref.read(adminProvider.notifier).enter();
                   Navigator.of(context).pop();
